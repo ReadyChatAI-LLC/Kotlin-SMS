@@ -1,12 +1,16 @@
 package com.aireply.data.local.contentResolver
 
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
 import android.provider.ContactsContract
+import android.provider.Telephony
 import android.util.Log
-import com.aireply.domain.models.Chat
+import com.aireply.domain.models.ChatDetailsModel
+import com.aireply.domain.models.SmsChat
 import com.aireply.domain.models.Contact
-import com.aireply.domain.models.SmsMessage
+import com.aireply.util.PhoneNumberParser
+import com.aireply.util.RandomColor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,31 +24,7 @@ class SmsContentResolver @Inject constructor(
 
     private val contactCache = mutableMapOf<String, String?>()
 
-    private suspend fun getSmsMessages(): List<SmsMessage> = withContext(Dispatchers.IO) {
-        val messages = mutableListOf<SmsMessage>()
-        val cursor = context.contentResolver.query(
-            Uri.parse("content://sms/inbox"),
-            arrayOf("address", "body", "date", "type"),
-            null,
-            null,
-            "date DESC"
-        )
-
-        Log.d("prueba", "getSmsMessages - SmsContentResolver")
-
-        cursor?.use {
-            while (it.moveToNext()) {
-                val address = it.getString(0)
-                val body = it.getString(1)
-                val date = it.getLong(2)
-
-                val senderName = getContactName(address) ?: address
-
-                messages.add(SmsMessage(address, body, date, senderName))
-            }
-        }
-        messages
-    }
+    private val contactsCache = mutableListOf<String>()
 
     private fun getContactName(phoneNumber: String): String? {
         if (contactCache.containsKey(phoneNumber)) {
@@ -53,16 +33,11 @@ class SmsContentResolver @Inject constructor(
 
         Log.d("prueba", "getContactName - Consultando contacto para: $phoneNumber")
         val uri = Uri.withAppendedPath(
-            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-            Uri.encode(phoneNumber)
+            ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber)
         )
 
         context.contentResolver.query(
-            uri,
-            arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME),
-            null,
-            null,
-            null
+            uri, arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME), null, null, null
         )?.use { cursor ->
             if (cursor.moveToFirst()) {
                 val name = cursor.getString(0)
@@ -74,19 +49,67 @@ class SmsContentResolver @Inject constructor(
         return null
     }
 
-    suspend fun groupMessagesByContact(): List<Chat> = withContext(Dispatchers.IO) {
-        Log.d("prueba", "groupMessagesByContact - SmsContentResolver")
-        getSmsMessages()
-            .groupBy { it.senderName }
-            .map { (contact, smsList) ->
-                val latestMessage = smsList.maxByOrNull { it.date }!!
-                Chat(
-                    contact = contact,
-                    lastMessage = latestMessage,
-                    messages = smsList
-                )
+    suspend fun getSmsChats(): List<SmsChat> = withContext(Dispatchers.IO) {
+        val smsChats = mutableListOf<SmsChat>()
+
+        val projection = arrayOf(
+            Telephony.Sms._ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.DATE,
+            Telephony.Sms.STATUS,
+            Telephony.Sms.TYPE,
+            Telephony.Sms.THREAD_ID
+        )
+
+        val cursor: Cursor? = context.contentResolver.query(
+            Telephony.Sms.CONTENT_URI, projection, null, null, Telephony.Sms.DEFAULT_SORT_ORDER
+        )
+
+        cursor?.use {
+            val addressIndex = it.getColumnIndex(Telephony.Sms.ADDRESS)
+            val bodyIndex = it.getColumnIndex(Telephony.Sms.BODY)
+            val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
+            val typeIndex = it.getColumnIndex(Telephony.Sms.TYPE)
+            val statusIndex = it.getColumnIndex(Telephony.Sms.STATUS)
+
+            while (it.moveToNext()) {
+                if (!contactsCache.contains(it.getString(addressIndex))) {
+                    val address = it.getString(addressIndex).takeIf { address -> !address.isNullOrEmpty() } ?: "Unknown"
+                    val body = it.getString(bodyIndex)
+                    val date = it.getString(dateIndex)
+                    val type = it.getString(typeIndex)
+                    val status = it.getString(statusIndex)
+
+                    Log.d(
+                        "prueba",
+                        "address: $address, body: $body, date: $date, type: $type, status: $status"
+                    )
+
+                    contactsCache.add(address)
+
+                    // address = MethodChannelProvider.formatPhoneNumberWithCountryCode(address)
+                    // Fetch contact name if the address is a valid phone number
+                    // val contactName = if (isPhoneNumber(address)) getContactName(address)!! else address
+
+                    val message = SmsChat(
+                        id = 0,
+                        sender = address,
+                        content = body,
+                        timeStamp = date.toLong(),
+                        status = status.toString(),
+                        type = type,
+                        contact = getContactName(address)?: address,
+                        updatedAt = date.toLong(),
+                        accountLogoColor = RandomColor.randomColor()
+                    )
+                    smsChats.add(message)
+                }
             }
-            .sortedByDescending { it.lastMessage.date }
+        }
+        Log.d("prueba", "5")
+
+        smsChats
     }
 
     fun getAllContacts(): List<Contact> {
@@ -101,11 +124,7 @@ class SmsContentResolver @Inject constructor(
         val sortOrder = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} ASC"
 
         val cursor = contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            projection,
-            null,
-            null,
-            sortOrder
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI, projection, null, null, sortOrder
         )
 
         cursor?.use {
@@ -118,38 +137,72 @@ class SmsContentResolver @Inject constructor(
                 val name = it.getString(nameIndex) ?: "Sin nombre"
                 val number = it.getString(numberIndex) ?: ""
                 if (!contactsMap.containsKey(id)) {
-                    contactsMap[id] = Contact(id, name, number)
+                    contactsMap[id] = Contact(id, name, number, RandomColor.randomColor())
                 }
             }
         }
         return contactsMap.values.toList().sortedBy { it.name }
     }
 
-    fun getSmsByPhoneNumber(phoneNumber: String): List<SmsMessage> {
-        val smsList = mutableListOf<SmsMessage>()
-        val uriSms = Uri.parse("content://sms")
-        val projection = arrayOf("address", "date", "body", "type")
-        val selection = "address = ?"
+    suspend fun getSmsChatByNumber(phoneNumberLong: String): ChatDetailsModel = withContext(Dispatchers.IO) {
+        val phoneNumber = PhoneNumberParser.phoneNumberParser(phoneNumberLong)
+
+        val smsChats = mutableListOf<SmsChat>()
+
+        val projection = arrayOf(
+            Telephony.Sms._ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.DATE,
+            Telephony.Sms.STATUS,
+            Telephony.Sms.TYPE,
+            Telephony.Sms.THREAD_ID
+        )
+
+        val selection = "${Telephony.Sms.ADDRESS} = ?"
         val selectionArgs = arrayOf(phoneNumber)
 
-        val cursor = context.contentResolver.query(uriSms, projection, selection, selectionArgs, "date DESC")
+        val cursor: Cursor? = context.contentResolver.query(
+            Telephony.Sms.CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            Telephony.Sms.DEFAULT_SORT_ORDER
+        )
+
         cursor?.use {
-            val addressIndex = it.getColumnIndex("address")
-            val dateIndex = it.getColumnIndex("date")
-            val bodyIndex = it.getColumnIndex("body")
-            val typeIndex = it.getColumnIndex("type")
+            val addressIndex = it.getColumnIndex(Telephony.Sms.ADDRESS)
+            val bodyIndex = it.getColumnIndex(Telephony.Sms.BODY)
+            val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
+            val typeIndex = it.getColumnIndex(Telephony.Sms.TYPE)
+            val statusIndex = it.getColumnIndex(Telephony.Sms.STATUS)
 
             while (it.moveToNext()) {
-                val address = it.getString(addressIndex)
-                val date = it.getLong(dateIndex)
+                val address = it.getString(addressIndex).takeIf {address -> !address.isNullOrEmpty() } ?: "Unknown"
                 val body = it.getString(bodyIndex)
-                val type = it.getInt(typeIndex)
+                val date = it.getString(dateIndex)
+                val type = it.getString(typeIndex)
+                val status = it.getString(statusIndex)
 
-                //smsList.add(SmsMessage(address, date, body, type))
+                val contactName = getContactName(address) ?: address
+
+                val message = SmsChat(
+                    id = 0,
+                    sender = address,
+                    content = body,
+                    timeStamp = date.toLong(),
+                    status = status.toString(),
+                    type = type,
+                    contact = contactName,
+                    updatedAt = date.toLong(),
+                    accountLogoColor = RandomColor.randomColor()
+                )
+                smsChats.add(message)
             }
         }
-
-        return smsList
+        val sortedSmsChats = smsChats.sortedBy { it.timeStamp }
+        ChatDetailsModel(phoneNumber, getContactName(phoneNumber)?:phoneNumber, sortedSmsChats.toMutableList())
     }
+
 
 }

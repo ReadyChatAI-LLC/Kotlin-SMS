@@ -23,24 +23,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.aireply.presentation.screens.chatList.SmsUiState
 
 @Composable
 fun DefaultSmsScreen(
@@ -50,6 +48,7 @@ fun DefaultSmsScreen(
 
     val isDefaultApp by viewModel.isDefaultApp
     val contactPermissionGranted by viewModel.contactPermissionGranted
+    val isEnabledToNavigate by viewModel.isEnabledToNavigate
 
     val context = LocalContext.current
 
@@ -75,8 +74,14 @@ fun DefaultSmsScreen(
     }
 
     LaunchedEffect(Unit) {
-        val packageName = context.packageName
-        val isDefaultSmsApp = Telephony.Sms.getDefaultSmsPackage(context) == packageName
+        Log.d(
+            "prueba",
+            "EN LAUNCHED_EFFECT: concedidos al iniciar aqui?: (IsDefaultApp: $isDefaultApp - Contact: $contactPermissionGranted)"
+        )
+
+        val roleManager = context.getSystemService(Context.ROLE_SERVICE) as RoleManager
+        val isDefaultSmsApp = roleManager.isRoleHeld(RoleManager.ROLE_SMS)
+
         val contactPermissionGrantedApp = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CONTACTS
@@ -96,17 +101,20 @@ fun DefaultSmsScreen(
         }
     }
 
-    if(isDefaultApp && contactPermissionGranted){
-        Log.d("prueba", "Permisos concedidos ($isDefaultApp - $contactPermissionGranted), a navegar")
+    if (isEnabledToNavigate) {
+        Log.d(
+            "prueba",
+            "EJECUTANDO PORQUE IsEnabledToNavigate true"
+        )
         onSetDefaultApp()
-        viewModel.updateIsDefaultApp(false)
-        viewModel.updateContactPermissionGranted(false)
+
+        viewModel.navigationWasExecuted()
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -114,45 +122,56 @@ fun DefaultSmsScreen(
         Icon(
             imageVector = Icons.Default.Sms,
             contentDescription = "SMS Icon",
-            tint = Color(0xFF007AFF),
-            modifier = Modifier.size(80.dp)
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(90.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Para usar todas las funciones, selecciona esta aplicación como tu app de SMS predeterminada y acepta el permiso de acceso a tus contactos.",
-            style = MaterialTheme.typography.bodyMedium,
+            text = "To use all features, set this app as your default SMS app and grant access to your contacts.",
+            style = TextStyle(
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
+                letterSpacing = 0.2.sp,
+                fontSize = 14.sp
+            ),
             textAlign = TextAlign.Center,
             color = Color.Gray
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
-            onClick = { viewModel.onRequestRoleClicked() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
-            enabled = !isDefaultApp
+        DefaultSmsButtons(
+            textButton = "Default SMS app",
+            isEnabledButton = !isDefaultApp
         ) {
-            Text(text = "Establecer como predeterminada", color = Color.White)
+            viewModel.onRequestRoleClicked()
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        Button(
-            onClick = { launcherContacts.launch(Manifest.permission.READ_CONTACTS) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
-            enabled = !contactPermissionGranted
+        DefaultSmsButtons(
+            textButton = "Access to Contacts",
+            isEnabledButton = !contactPermissionGranted
         ) {
-            Text(text = "Acceso a contactos", color = Color.White)
+            launcherContacts.launch(Manifest.permission.READ_CONTACTS)
         }
+    }
+}
+
+@Composable
+fun DefaultSmsButtons(textButton: String, isEnabledButton: Boolean, onClick: () -> Unit) {
+    Button(
+        onClick = { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface),
+        enabled = isEnabledButton
+    ) {
+        Text(text = textButton, color = MaterialTheme.colorScheme.surface, fontSize = 18.sp)
     }
 }

@@ -1,5 +1,6 @@
-package com.aireply.presentation.screens.startChat
+package com.aireply.presentation.screens.contacts
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -9,7 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class StartChatViewModel @Inject constructor(
+class ContactsViewModel @Inject constructor(
     private val smsContentResolver: SmsContentResolver
 ): ViewModel() {
     private val _contacts = mutableStateOf<List<Contact>>(emptyList())
@@ -19,6 +20,7 @@ class StartChatViewModel @Inject constructor(
     val query: State<String> get() = _query
 
     fun getAllContacts(){
+        Log.d("prueba", "ContactsViewModel. Obteniendo contactos")
         _contacts.value = smsContentResolver.getAllContacts()
     }
 
