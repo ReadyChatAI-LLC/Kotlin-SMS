@@ -1,5 +1,9 @@
+
 package com.aireply.presentation.screens.chatDetails.components
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -27,6 +31,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,18 +41,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aireply.data.local.SmsSendService
 import com.aireply.domain.models.ChatDetailsModel
 import com.aireply.domain.models.SmsChat
+import com.aireply.presentation.screens.chatDetails.ChatDetailsViewModel
 import com.aireply.util.FormatDate
 import java.time.LocalTime
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatDetailsScreen(messageText: String, messages: ChatDetailsModel, onMessageTextChange: (String) -> Unit, onBack: () -> Unit) {
+fun ChatDetailsScreen(
+    viewModel: ChatDetailsViewModel,
+    messageText: String,
+    messages: ChatDetailsModel,
+    onMessageTextChange: (String) -> Unit,
+    onBack: () -> Unit) {
+
+
 
     BackHandler {
         onBack()
@@ -79,8 +94,13 @@ fun ChatDetailsScreen(messageText: String, messages: ChatDetailsModel, onMessage
             MessageInput(
                 messageText = messageText,
                 onMessageChange = { onMessageTextChange(it) },
-                onSend = {
+                onSend = {context->
+
+
                     if (messageText.isNotBlank()) {
+
+                        viewModel.sendSms(context, messages.contact, messageText.trim())
+
                         messages.chatList.add(
                             SmsChat(
                                 id = messages.chatList.size + 1,
@@ -93,6 +113,7 @@ fun ChatDetailsScreen(messageText: String, messages: ChatDetailsModel, onMessage
                                 updatedAt = System.currentTimeMillis(),
                                 accountLogoColor = Color.LightGray
                             )
+
                         )
                         onMessageTextChange("")
                     }
@@ -157,8 +178,10 @@ fun MessageBubble(message: SmsChat) {
 fun MessageInput(
     messageText: String,
     onMessageChange: (String) -> Unit,
-    onSend: () -> Unit
+    onSend: (Context) -> Unit
 ) {
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -177,7 +200,7 @@ fun MessageInput(
         )
 
         IconButton(onClick = {
-            onSend()
+            onSend(context)
         }) {
             Icon(
                 imageVector = Icons.Default.Send,
@@ -187,3 +210,4 @@ fun MessageInput(
         }
     }
 }
+
