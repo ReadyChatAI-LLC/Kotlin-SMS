@@ -1,10 +1,13 @@
 package com.aireply.presentation.screens.chatDetails
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aireply.data.local.SmsSendService
 import com.aireply.data.local.contentResolver.SmsContentResolver
 import com.aireply.presentation.screens.chatDetails.components.ChatDetailsState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,4 +39,14 @@ class ChatDetailsViewModel @Inject constructor(
     fun updateMessageText(messageText: String){
         _messageText.value = messageText
     }
+
+
+    fun sendSms(context: Context, phoneNumber: String, message: String) {
+        val intent = Intent(context, SmsSendService::class.java).apply {
+            putExtra("phoneNumber", phoneNumber)
+            putExtra("message", message)
+        }
+        context.startService(intent)
+    }
+
 }
