@@ -27,9 +27,15 @@ fun ChatScreen(viewModel: ChatDetailsViewModel = hiltViewModel(), phoneNumber: S
 
         is ChatDetailsState.Success -> {
             val messageText by viewModel.messageText
-            ChatDetailsScreen(messageText = messageText, messages = state.messages, onMessageTextChange = {viewModel.updateMessageText(it)}, onBack = onBack)
+            ChatDetailsScreen(
+                viewModel = viewModel,
+                messageText = messageText,
+                messages = state.messages,
+                onMessageTextChange = {viewModel.updateMessageText(it)},
+                onBack = onBack)
         }
 
         is ChatDetailsState.Error -> ErrorMessage(state.message)
     }
 }
+
