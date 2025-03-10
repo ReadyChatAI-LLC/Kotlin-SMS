@@ -2,7 +2,6 @@ package com.aireply.presentation.screens.chatList.components
 
 import android.app.role.RoleManager
 import android.content.Context
-import android.provider.Telephony
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Textsms
@@ -41,13 +41,13 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aireply.domain.models.SmsChat
+import com.aireply.domain.models.ChatSummaryModel
 import com.aireply.util.FormatDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatList(
-    smsChats: List<SmsChat>,
+    chatSummaries: List<ChatSummaryModel>,
     navigateToSettings: () -> Unit,
     navigateToChat: (String) -> Unit,
     navigateToStartChat: () -> Unit,
@@ -66,7 +66,6 @@ fun ChatList(
         }
     }
 
-    Log.d("prueba", "La lista de chats cargo")
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,7 +80,7 @@ fun ChatList(
                     }
                 },
                 navigationIcon = {
-                    Icon(imageVector = Icons.Default.Textsms, modifier = Modifier.padding(horizontal = 8.dp), contentDescription = "SmsLogo")
+                    Icon(imageVector = Icons.Default.Message, modifier = Modifier.padding(horizontal = 8.dp).size(30.dp), contentDescription = "SmsLogo")
                 }
             )
         },
@@ -105,19 +104,19 @@ fun ChatList(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            items(smsChats) { chat ->
-                ChatItem(smsChat = chat, navigateToChat = navigateToChat)
+            items(chatSummaries) { chat ->
+                ChatItem(chatSummaryModel = chat, navigateToChat = navigateToChat)
             }
         }
     }
 }
 
 @Composable
-fun ChatItem(smsChat: SmsChat, navigateToChat: (String) -> Unit) {
+fun ChatItem(chatSummaryModel: ChatSummaryModel, navigateToChat: (String) -> Unit) {
 
     Row(
         modifier = Modifier
-            .clickable { navigateToChat(smsChat.sender) }
+            .clickable { navigateToChat(chatSummaryModel.address) }
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -128,7 +127,7 @@ fun ChatItem(smsChat: SmsChat, navigateToChat: (String) -> Unit) {
             contentDescription = "AccountRepresentation",
             modifier = Modifier
                 .size(50.dp),
-            tint = smsChat.accountLogoColor
+            tint = chatSummaryModel.accountLogoColor
         )
         Column(
             modifier = Modifier
@@ -137,11 +136,11 @@ fun ChatItem(smsChat: SmsChat, navigateToChat: (String) -> Unit) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            Text(text = smsChat.contact, fontWeight = Bold)
+            Text(text = chatSummaryModel.contact, fontWeight = Bold)
             val messageBody =
-                if (smsChat.content.length > 80) smsChat.content.take(80) + " ..." else smsChat.content
+                if (chatSummaryModel.content.length > 80) chatSummaryModel.content.take(80) + " ..." else chatSummaryModel.content
             Row {
-                if (smsChat.type.toInt() == 2) {
+                if (chatSummaryModel.type.toInt() == 2) {
                     Icon(
                         imageVector = Icons.Default.DoneAll,
                         contentDescription = "Sms Sent",
@@ -154,7 +153,7 @@ fun ChatItem(smsChat: SmsChat, navigateToChat: (String) -> Unit) {
             }
         }
         Text(
-            text = FormatDate.formatDate(smsChat.updatedAt),
+            text = FormatDate.formatDate(chatSummaryModel.updatedAt),
             modifier = Modifier.weight(1f),
             style = TextStyle(fontSize = 11.sp, textAlign = TextAlign.End)
         )

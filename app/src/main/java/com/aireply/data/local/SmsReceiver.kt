@@ -7,14 +7,12 @@ import android.content.Intent
 import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.util.Log
-import com.aireply.domain.models.SmsChat
-import com.aireply.util.RandomColor
-import androidx.compose.ui.graphics.Color
+import com.aireply.domain.models.TextMessageModel
 
 class SmsReceiver : BroadcastReceiver() {
 
     companion object {
-        var smsListener: ((SmsChat) -> Unit)? = null
+        var smsListener: ((TextMessageModel) -> Unit)? = null
 
         fun clearSmsListener() {
             smsListener = null
@@ -45,18 +43,14 @@ class SmsReceiver : BroadcastReceiver() {
                     }
                     context.contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
 
-
-
-                    val receivedSms = SmsChat(
+                    val receivedSms = TextMessageModel(
                         sender = sender,
                         content = messageBody,
                         timeStamp = timestamp,
                         status = "0",
-                        type = "1",
-                        contact = sender,
-                        updatedAt = timestamp,
-                        accountLogoColor = Color(0xFF87CEEB)
+                        type = "1"
                     )
+
                     Log.d("messentrante", "SMS de $sender: $receivedSms")
                     smsListener?.invoke(receivedSms)
                 }

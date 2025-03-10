@@ -16,3 +16,6 @@ object DefaultSmsRoute
 
 @Serializable
 object ContactsRoute
+
+@Serializable
+object ChatProfileRoute
