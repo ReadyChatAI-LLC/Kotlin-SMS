@@ -142,7 +142,8 @@ fun MessagesList(modifier: Modifier = Modifier, messages: List<SmsChat>) {
 fun MessageBubble(message: SmsChat) {
     val isFromMe = message.type.toInt() == 2
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
-    val bubbleColor = if (isFromMe) Color(0xFF85929e) else MaterialTheme.colorScheme.surfaceContainerHigh
+
+    val bubbleColor = if (isFromMe) Color(0xFF85929e) else MaterialTheme.colorScheme.primary
     val textColor = if (isFromMe) Color.Black else Color.White
     val textAlign = if(isFromMe) TextAlign.End else TextAlign.Start
 
