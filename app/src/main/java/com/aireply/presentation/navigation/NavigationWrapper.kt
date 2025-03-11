@@ -53,7 +53,7 @@ fun NavigationWrapper() {
 
         composable<ChatRoute> { backStackEntry ->
             val phoneNumber: ChatRoute = backStackEntry.toRoute()
-            ChatScreen(phoneNumber = phoneNumber.phoneNumber) {
+            ChatScreen(address = phoneNumber.phoneNumber) {
                 navController.popBackStack()
             }
         }

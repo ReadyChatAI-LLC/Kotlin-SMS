@@ -17,14 +17,14 @@ class SmsSendService : Service() {
             put(Telephony.Sms.DATE, System.currentTimeMillis())
             put(Telephony.Sms.READ, 1)
             put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_SENT)
-            Log.d("pruebas", "Mensajffffffffff")
+            Log.d("prueba", "Mensajffffffffff")
         }
 
         try {
             contentResolver.insert(Telephony.Sms.Sent.CONTENT_URI, values)
-            Log.d("pruebas", "Mensaje guardado en la base de datos")
+            Log.d("prueba", "Mensaje guardado en la base de datos")
         }catch (e: Exception){
-            Log.e("pruebas", "Error al guardar SMS en la base de datos: ${e.message}")
+            Log.e("prueba", "Error al guardar SMS en la base de datos: ${e.message}")
         }
     }
 
@@ -38,12 +38,12 @@ class SmsSendService : Service() {
             try {
                 val smsManager = SmsManager.getDefault()
                 smsManager.sendTextMessage(phoneNumber, null, message, null, null)
-                Log.d("pruebas", "Mensaje enviado a $phoneNumber")
+                Log.d("prueba", "Mensaje enviado a $phoneNumber")
 
                 saveSentSms(phoneNumber, message)
 
             } catch (e: Exception) {
-                Log.e("pruebas", "Error al enviar SMS: ${e.message}")
+                Log.e("prueba", "Error al enviar SMS: ${e.message}")
             }
         }
         stopSelf()

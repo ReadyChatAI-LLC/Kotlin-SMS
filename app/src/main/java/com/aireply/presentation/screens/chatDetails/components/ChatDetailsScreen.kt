@@ -1,11 +1,13 @@
-
 package com.aireply.presentation.screens.chatDetails.components
 
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,11 +16,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,128 +53,180 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aireply.data.local.SmsSendService
 import com.aireply.domain.models.ChatDetailsModel
-import com.aireply.domain.models.SmsChat
-import com.aireply.presentation.screens.chatDetails.ChatDetailsViewModel
+import com.aireply.domain.models.MessageModel
+import com.aireply.domain.models.TextMessageModel
 import com.aireply.util.FormatDate
-import java.time.LocalTime
-import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailsScreen(
-    viewModel: ChatDetailsViewModel,
     messageText: String,
     messages: ChatDetailsModel,
     onMessageTextChange: (String) -> Unit,
-    onBack: () -> Unit) {
+    onBack: () -> Unit,
+    onNewMessageSent: (TextMessageModel) -> Unit,
+    removeMessage: (Set<Int>) -> Unit,
+) {
 
-
+    var selectedMessageIds by remember { mutableStateOf(setOf<Int>()) }
+    val isSelectionMode = selectedMessageIds.isNotEmpty()
 
     BackHandler {
         onBack()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(messages.contact) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else messages.contact) },
+            navigationIcon = {
+                IconButton(onClick = {
+                    if (isSelectionMode)
+                        selectedMessageIds = emptySet()
+                    else
+                        onBack()
+                }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+            actions = {
+                if (isSelectionMode) {
+                    IconButton(onClick = {
+                        removeMessage(selectedMessageIds)
+                        selectedMessageIds = emptySet()
+                    }) {
+                        Icon(Icons.Default.DeleteOutline, contentDescription = "Delete message", modifier = Modifier.size(30.dp))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-            )
-        }
-    ) { innerPadding ->
+                }
+            }
+        )
+    }) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            MessagesList(modifier = Modifier.weight(1f), messages.chatList)
+            MessagesList(
+                modifier = Modifier.weight(1f),
+                messages.chatList,
+                selectedList = selectedMessageIds,
+                isSelectionMode = isSelectionMode,
+                onMessageSelected = {
+                    selectedMessageIds = if (selectedMessageIds.contains(it)) {
+                        selectedMessageIds - it
+                    } else {
+                        selectedMessageIds + it
+                    }
+                }
+            )
 
             MessageInput(
                 messageText = messageText,
                 onMessageChange = { onMessageTextChange(it) },
-                onSend = {context->
-
+                onSend = {
 
                     if (messageText.isNotBlank()) {
 
-                        viewModel.sendSms(context, messages.contact, messageText.trim())
-
-                        messages.chatList.add(
-                            SmsChat(
-                                id = messages.chatList.size + 1,
-                                sender = "ME",
+                        onNewMessageSent(
+                            TextMessageModel(
+                                sender = messages.address,
                                 content = messageText.trim(),
                                 timeStamp = System.currentTimeMillis(),
-                                status = "IDK",
-                                type = "2",
-                                contact = "ME",
-                                updatedAt = System.currentTimeMillis(),
-                                accountLogoColor = Color.LightGray
+                                status = "0",
+                                type = "2"
                             )
-
                         )
                         onMessageTextChange("")
                     }
-                }
+                })
+        }
+    }
+}
+
+@Composable
+fun MessagesList(
+    modifier: Modifier = Modifier, messages: List<MessageModel>,
+    selectedList: Set<Int>,
+    isSelectionMode: Boolean,
+    onMessageSelected: (Int) -> Unit,
+) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxWidth(), reverseLayout = true
+    ) {
+        items(messages.reversed()) { message ->
+            MessageBubble(
+                message = message,
+                isSelected = selectedList.contains(message.messageId),
+                isSelectionMode = isSelectionMode,
+                onMessageSelected = { onMessageSelected(it) }
             )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MessagesList(modifier: Modifier = Modifier, messages: List<SmsChat>) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        reverseLayout = true
-    ) {
-        items(messages.reversed()) { message ->
-            MessageBubble(message = message)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
-}
-
-@Composable
-fun MessageBubble(message: SmsChat) {
+fun MessageBubble(
+    message: MessageModel,
+    isSelected: Boolean,
+    isSelectionMode: Boolean,
+    onMessageSelected: (Int) -> Unit
+) {
     val isFromMe = message.type.toInt() == 2
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
-
-    val bubbleColor = if (isFromMe) Color(0xFF85929e) else MaterialTheme.colorScheme.primary
+    val bubbleColor =
+        if (isFromMe) Color(0xFF85929e) else MaterialTheme.colorScheme.surfaceContainerHigh
     val textColor = if (isFromMe) Color.Black else Color.White
-    val textAlign = if(isFromMe) TextAlign.End else TextAlign.Start
+    val textAlign = if (isFromMe) TextAlign.End else TextAlign.Start
+    val boxColor = if (isSelected) Color(0xFFC9CBCB).copy(alpha = 0.3f) else Color.Transparent
+
+    val messageId = message.messageId
+
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.5.dp),
-        contentAlignment = alignment
+            .background(color = boxColor)
+            .padding(
+                top = 4.dp, bottom = 4.dp,
+                start = 5.dp, end = 5.dp
+            )
+            .combinedClickable(
+                onClick = {
+                    if (isSelectionMode) {
+                        onMessageSelected(messageId)
+                    }
+                },
+                onLongClick = {
+                    if (!isSelectionMode) {
+                        onMessageSelected(messageId)
+                    }
+                }
+            ), contentAlignment = alignment
     ) {
         Column(
             modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
                 .wrapContentWidth()
+                .widthIn(max = 330.dp)
                 .background(bubbleColor)
                 .padding(8.dp),
         ) {
             Text(
                 text = message.content.trim(),
                 color = textColor,
-                textAlign = textAlign
+                textAlign = textAlign,
+                fontSize = 18.sp
             )
             Text(
                 text = FormatDate.formatDateTime(message.timeStamp),
                 color = textColor.copy(alpha = 0.7f),
-                fontSize = 10.sp,
+                //modifier = Modifier.fillMaxWidth(),
+                fontSize = 11.sp,
                 textAlign = textAlign
             )
         }
@@ -179,10 +237,8 @@ fun MessageBubble(message: SmsChat) {
 fun MessageInput(
     messageText: String,
     onMessageChange: (String) -> Unit,
-    onSend: (Context) -> Unit
+    onSend: () -> Unit
 ) {
-    val context = LocalContext.current
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -201,7 +257,7 @@ fun MessageInput(
         )
 
         IconButton(onClick = {
-            onSend(context)
+            onSend()
         }) {
             Icon(
                 imageVector = Icons.Default.Send,
@@ -211,4 +267,3 @@ fun MessageInput(
         }
     }
 }
-
