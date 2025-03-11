@@ -41,6 +41,7 @@ class LocalSmsRepository @Inject constructor(
     }
 
     suspend fun addTextMessage(textMessage: TextMessageModel) = withContext(Dispatchers.IO) {
+        Log.d("prueba", "Agregando nuevo mensaje: $textMessage")
         val address = PhoneNumberParser.getPhoneNumberInfo(textMessage.sender)
         val chatId = chatDetailsDao.getChatIdByAddress(textMessage.sender)?.let {
             chatDetailsDao.insertTextMessage(textMessage.toMessageEntity(it))
@@ -53,7 +54,7 @@ class LocalSmsRepository @Inject constructor(
                 type = textMessage.type,
                 updatedAt = textMessage.timeStamp
             )
-        }?: Log.e("prueba","No se agrego por alguna razon: +${address.countryCode} ${textMessage.sender}")
+        }?: Log.e("prueba","No se agrego por alguna razon: textMessage.sender")
     }
 
     suspend fun updateChatSummary(summaryEntity: ChatSummaryEntity) = withContext(Dispatchers.IO) {

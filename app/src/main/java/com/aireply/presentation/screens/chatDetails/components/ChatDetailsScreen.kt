@@ -132,7 +132,7 @@ fun ChatDetailsScreen(
 
                         onNewMessageSent(
                             TextMessageModel(
-                                sender = messages.contact,
+                                sender = messages.address,
                                 content = messageText.trim(),
                                 timeStamp = System.currentTimeMillis(),
                                 status = "0",
