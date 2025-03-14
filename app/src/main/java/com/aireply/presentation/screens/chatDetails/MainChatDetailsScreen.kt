@@ -1,35 +1,75 @@
 package com.aireply.presentation.screens.chatDetails
 
 import android.util.Log
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.aireply.domain.models.MessageModel
 import com.aireply.presentation.screens.chatDetails.components.ChatDetailsScreen
-import com.aireply.presentation.screens.chatDetails.components.ChatDetailsState
+import com.aireply.presentation.screens.shared.ChatDetailsState
 import com.aireply.presentation.screens.shared.ShimmerEffect
-import com.aireply.presentation.screens.shared.ErrorMessage
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.platform.LocalContext
+import com.aireply.presentation.screens.shared.ErrorScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatDetailsViewModel = hiltViewModel(), phoneNumber: String, onBack: () -> Unit) {
+fun MainChatDetailsScreen(
+    viewModel: ChatDetailsViewModel = hiltViewModel(),
+    address: String,
+    onBack: () -> Unit,
+    onTopBarClick: (String) -> Unit
+) {
 
-    Log.d("prueba", "Phone Number: $phoneNumber")
+    Log.d("prueba", "Address: $address")
 
     val chatDetailsState by viewModel.uiState
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.updateAddress(address)
+    }
 
     when (val state = chatDetailsState) {
         is ChatDetailsState.Loading -> {
-            LaunchedEffect(Unit) { viewModel.getChatMessages(phoneNumber) }
+            LaunchedEffect(Unit) {
+                viewModel.getChatMessages()
+            }
             ShimmerEffect()
         }
 
         is ChatDetailsState.Success -> {
             val messageText by viewModel.messageText
-            ChatDetailsScreen(messageText = messageText, messages = state.messages, onMessageTextChange = {viewModel.updateMessageText(it)}, onBack = onBack)
+            ChatDetailsScreen(
+                messageText = messageText,
+                messages = state.chatDetails,
+                onMessageTextChange = { viewModel.updateMessageText(it) },
+                onBack = onBack,
+                onNewMessageSent = {textMessage ->
+                    viewModel.sendMessage(textMessage, context)
+                },
+                removeMessage = {
+                    val selectedMessages =
+                        state.chatDetails.chatList.filter { obj -> obj.messageId in it.toList() }
+                    if (selectedMessages.contains(state.chatDetails.chatList.last())) {
+                        val newMessage: MessageModel? =
+                            state.chatDetails.chatList.filter { messages -> messages.messageId !in it }
+                                .maxByOrNull { it.messageId }
+                        viewModel.removeMessages(
+                            selectedMessages,
+                            state.chatDetails.address,
+                            newMessage
+                        )
+                    } else {
+                        viewModel.removeMessages(selectedMessages, null, null)
+                    }
+                },
+                onTopBarClick = {onTopBarClick(state.chatDetails.address)})
         }
 
-        is ChatDetailsState.Error -> ErrorMessage(state.message)
+        is ChatDetailsState.Error -> ErrorScreen(
+            titleTopBar = address,
+            errorMessage = state.message,
+            onRetry = {},
+            onBack = { onBack() })
     }
 }

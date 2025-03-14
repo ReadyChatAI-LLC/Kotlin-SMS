@@ -43,7 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.aireply.domain.models.Contact
+import com.aireply.domain.models.ChatDetailsModel
 import com.aireply.util.FormatDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,8 +103,8 @@ fun ContactsScreen(
                 contacts
             } else {
                 contacts.filter {
-                    it.name.contains(query, ignoreCase = true) ||
-                            it.number.contains(query, ignoreCase = true)
+                    it.contact.contains(query, ignoreCase = true) ||
+                            it.address.contains(query, ignoreCase = true)
                 }
             }
 
@@ -118,10 +118,10 @@ fun ContactsScreen(
 }
 
 @Composable
-fun ContactItem(contact: Contact, onContactClick: (String) -> Unit) {
+fun ContactItem(contact: ChatDetailsModel, onContactClick: (String) -> Unit) {
     Row(
         modifier = Modifier
-            .clickable { onContactClick(contact.number) }
+            .clickable { onContactClick(contact.address) }
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.Start,
@@ -141,8 +141,8 @@ fun ContactItem(contact: Contact, onContactClick: (String) -> Unit) {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            Text(text = contact.name, fontWeight = Bold)
-            Text(text = contact.number, style = TextStyle())
+            Text(text = contact.contact, fontWeight = Bold)
+            Text(text = contact.address, style = TextStyle())
         }
     }
 }

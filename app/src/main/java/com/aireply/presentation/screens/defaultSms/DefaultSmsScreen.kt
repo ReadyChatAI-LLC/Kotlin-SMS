@@ -52,6 +52,16 @@ fun DefaultSmsScreen(
 
     val context = LocalContext.current
 
+    val launcherReadSms = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            Log.d("prueba", "Permiso concedido")
+        } else {
+            Log.d("prueba", "Permiso Denegado")
+        }
+    }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -158,6 +168,15 @@ fun DefaultSmsScreen(
         ) {
             launcherContacts.launch(Manifest.permission.READ_CONTACTS)
         }
+
+        /*
+        DefaultSmsButtons(
+            textButton = "Access to read SMS",
+            isEnabledButton = true
+        ) {
+            launcherReadSms.launch(Manifest.permission.READ_SMS)
+        }
+        */
     }
 }
 

@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 object ChatListRoute
 
 @Serializable
-data class ChatRoute(val phoneNumber: String)
+data class ChatDetailsRoute(val phoneNumber: String)
 
 @Serializable
 object SettingsRoute
@@ -16,3 +16,9 @@ object DefaultSmsRoute
 
 @Serializable
 object ContactsRoute
+
+@Serializable
+data class ChatProfileRoute(val phoneNumber: String)
+
+@Serializable
+object ArchivedChatsRoute
