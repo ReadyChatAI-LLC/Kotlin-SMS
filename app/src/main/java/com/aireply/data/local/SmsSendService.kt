@@ -1,10 +1,8 @@
 package com.aireply.data.local
 
 import android.app.Service
-import android.content.ContentValues
 import android.content.Intent
 import android.os.IBinder
-import android.provider.Telephony
 import android.telephony.SmsManager
 import android.util.Log
 
@@ -32,7 +30,7 @@ class SmsSendService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val phoneNumber = intent?.getStringExtra("phoneNumber")
+        val phoneNumber = intent?.getStringExtra("phone")
         val message = intent?.getStringExtra("message")
         if (!phoneNumber.isNullOrEmpty() && !message.isNullOrEmpty()) {
             try {
