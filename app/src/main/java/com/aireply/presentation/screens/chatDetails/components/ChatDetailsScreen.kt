@@ -26,12 +26,15 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -66,6 +69,7 @@ fun ChatDetailsScreen(
     onBack: () -> Unit,
     onNewMessageSent: (TextMessageModel) -> Unit,
     removeMessage: (Set<Int>) -> Unit,
+    onTopBarClick: () -> Unit
 ) {
 
     var selectedMessageIds by remember { mutableStateOf(setOf<Int>()) }
@@ -77,7 +81,12 @@ fun ChatDetailsScreen(
 
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else messages.contact) },
+            title = {
+                TextButton(onClick = { onTopBarClick() }) {
+                    Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else messages.contact,
+                        fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+                }
+            },
             navigationIcon = {
                 IconButton(onClick = {
                     if (isSelectionMode)
@@ -98,7 +107,11 @@ fun ChatDetailsScreen(
                         removeMessage(selectedMessageIds)
                         selectedMessageIds = emptySet()
                     }) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = "Delete message", modifier = Modifier.size(30.dp))
+                        Icon(
+                            Icons.Default.DeleteOutline,
+                            contentDescription = "Delete message",
+                            modifier = Modifier.size(27.dp)
+                        )
                     }
                 }
             }

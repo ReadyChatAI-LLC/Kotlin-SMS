@@ -1,6 +1,5 @@
 package com.aireply.presentation.screens.chatList
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -10,15 +9,14 @@ import com.aireply.presentation.screens.shared.ErrorScreen
 import com.aireply.presentation.screens.chatList.components.SmsUiState
 
 @Composable
-fun ChatListScreen(
+fun MainChatListScreen(
     viewModel: ChatListViewModel = hiltViewModel(),
-    navigateToChat: (String) -> Unit,
+    navigateToChatDetails: (String) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToStartChat: () -> Unit,
-    navigateToSetDefaultScreen: () -> Unit
+    navigateToSetDefaultScreen: () -> Unit,
+    navigateToArchivedChats: () -> Unit
 ) {
-
-    Log.d("prueba", "Entro a ChatListScreen")
 
     val uiState by viewModel.uiState
 
@@ -30,9 +28,12 @@ fun ChatListScreen(
         is SmsUiState.Success -> ChatList(
             chatSummaries = state.messages,
             navigateToSettings = { navigateToSettings() },
-            navigateToChat = { navigateToChat(it) },
-            navigateToStartChat = {navigateToStartChat()},
-            navigateToSetDefaultScreen = {navigateToSetDefaultScreen()})
+            navigateToChat = { navigateToChatDetails(it) },
+            navigateToStartChat = { navigateToStartChat() },
+            navigateToSetDefaultScreen = { navigateToSetDefaultScreen() },
+            onDeletionChat = { viewModel.deleteChat(it.toList(), state.messages) },
+            onArchiveChat = { viewModel.archiveChats(it.toList()) },
+            navigateToChatsArchived = { navigateToArchivedChats() })
 
         is SmsUiState.Error -> ErrorScreen(errorMessage = state.message, onRetry = {}, onBack = {})
     }

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChatSummaryDao {
-    @Query("SELECT * FROM chat_summary ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM chat_summary WHERE archivedChat = 0 ORDER BY updatedAt DESC")
     fun getChatSummaries(): Flow<List<ChatSummaryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -38,15 +38,24 @@ interface ChatSummaryDao {
         updatedAt: Long
     )
 
+    @Query("SELECT * FROM chat_summary WHERE archivedChat = 1")
+    fun getArchivedChatSummaries(): Flow<List<ChatSummaryEntity>>
+
+    @Query("UPDATE chat_summary SET archivedChat = :archived WHERE id IN (:ids)")
+    suspend fun updateArchivedChats(ids: List<Int>, archived: Boolean)
+
     @Update
     suspend fun updateChatSummary(summary: ChatSummaryEntity)
 
-    @Delete
-    suspend fun deleteChatSummary(summary: ChatSummaryEntity)
+    @Query("DELETE FROM chat_summary WHERE address IN (:addresses)")
+    suspend fun deleteChatSummariesByAddresses(addresses: List<String>)
 
     @Update
     suspend fun updateChatSummaries(summaries: List<ChatSummaryEntity>)
 
     @Query("SELECT * FROM chat_summary WHERE id = :id")
     suspend fun getChatSummaryById(id: Int): ChatSummaryEntity?
+
+    @Query("SELECT * FROM chat_summary WHERE address = :address")
+    suspend fun getChatSummaryByAddress(address: String): ChatSummaryEntity?
 }

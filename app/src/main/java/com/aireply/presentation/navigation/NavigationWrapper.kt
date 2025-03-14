@@ -1,5 +1,6 @@
 package com.aireply.presentation.navigation
 
+import ChatProfileScreen
 import android.Manifest
 import android.content.pm.PackageManager
 import android.provider.Telephony
@@ -11,8 +12,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.aireply.presentation.screens.chatList.ChatListScreen
-import com.aireply.presentation.screens.chatDetails.ChatScreen
+import com.aireply.presentation.screens.chatList.MainChatListScreen
+import com.aireply.presentation.screens.chatDetails.MainChatDetailsScreen
+import com.aireply.presentation.screens.chatList.chatArchived.MainChatArchivedScreen
 import com.aireply.presentation.screens.defaultSms.DefaultSmsScreen
 import com.aireply.presentation.screens.settings.SettingsScreen
 import com.aireply.presentation.screens.contacts.ContactsScreen
@@ -38,8 +40,8 @@ fun NavigationWrapper() {
     NavHost(navController = navController, startDestination = startDestination) {
         composable<ChatListRoute> {
             Log.d("prueba", "Navegando a ChatListScreen")
-            ChatListScreen(
-                navigateToChat = { phoneNumber -> navController.navigate(ChatRoute(phoneNumber)) },
+            MainChatListScreen(
+                navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
                 navigateToSettings = {
                     navController.navigate(SettingsRoute)
                 },
@@ -48,14 +50,18 @@ fun NavigationWrapper() {
                 },
                 navigateToSetDefaultScreen = {
                     navController.navigate(DefaultSmsRoute)
+                },
+                navigateToArchivedChats = {
+                    navController.navigate(ArchivedChatsRoute)
                 })
         }
 
-        composable<ChatRoute> { backStackEntry ->
-            val phoneNumber: ChatRoute = backStackEntry.toRoute()
-            ChatScreen(address = phoneNumber.phoneNumber) {
-                navController.popBackStack()
-            }
+        composable<ChatDetailsRoute> { backStackEntry ->
+            val phoneNumber: ChatDetailsRoute = backStackEntry.toRoute()
+            MainChatDetailsScreen(
+                address = phoneNumber.phoneNumber,
+                onBack = { navController.popBackStack() },
+                onTopBarClick = { address -> navController.navigate(ChatProfileRoute(address)) })
         }
 
         composable<SettingsRoute> {
@@ -70,8 +76,22 @@ fun NavigationWrapper() {
 
         composable<ContactsRoute> {
             ContactsScreen(onContactClick = { phoneNumber ->
-                navController.navigate(ChatRoute(phoneNumber))
+                navController.navigate(ChatDetailsRoute(phoneNumber))
             }, onBack = { navController.popBackStack() })
+        }
+
+        composable<ChatProfileRoute> { backStackEntry ->
+            val phoneNumber: ChatDetailsRoute = backStackEntry.toRoute()
+            ChatProfileScreen(
+                address = phoneNumber.phoneNumber,
+                onBack = { navController.popBackStack() })
+        }
+
+        composable<ArchivedChatsRoute> {
+            MainChatArchivedScreen(
+                navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
