@@ -5,7 +5,7 @@ import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aireply.domain.models.MessageModel
 import com.aireply.presentation.screens.chatDetails.components.ChatDetailsScreen
-import com.aireply.presentation.screens.chatDetails.components.ChatDetailsState
+import com.aireply.presentation.screens.shared.ChatDetailsState
 import com.aireply.presentation.screens.shared.ShimmerEffect
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.platform.LocalContext
@@ -13,10 +13,11 @@ import com.aireply.presentation.screens.shared.ErrorScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(
+fun MainChatDetailsScreen(
     viewModel: ChatDetailsViewModel = hiltViewModel(),
     address: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onTopBarClick: (String) -> Unit
 ) {
 
     Log.d("prueba", "Address: $address")
@@ -61,7 +62,8 @@ fun ChatScreen(
                     } else {
                         viewModel.removeMessages(selectedMessages, null, null)
                     }
-                })
+                },
+                onTopBarClick = {onTopBarClick(state.chatDetails.address)})
         }
 
         is ChatDetailsState.Error -> ErrorScreen(

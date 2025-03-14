@@ -40,7 +40,7 @@ class SmsContentResolver @Inject constructor(
             ?.use(block)
     }
 
-    private fun getContactName(phoneNumber: String): String? {
+    fun getContactName(phoneNumber: String): String? {
         contactCache[phoneNumber]?.let { return it }
         Log.d("prueba", "getContactName - Consultando nombre de contacto para: $phoneNumber")
 

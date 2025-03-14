@@ -47,6 +47,9 @@ interface ChatDetailsDao {
     @Query("SELECT id FROM chat_details WHERE address = :address")
     suspend fun getChatIdByAddress(address: String): Long?
 
+    @Query("SELECT id FROM chat_details WHERE address IN (:addresses)")
+    suspend fun getChatIdsByAddresses(addresses: List<String>): List<Long>
+
     @Query("SELECT * FROM messages WHERE chatId = :chatId AND messageId = :messageId LIMIT 1")
     suspend fun findMessage(chatId: Long, messageId: Int): MessageEntity?
 
@@ -55,4 +58,7 @@ interface ChatDetailsDao {
 
     @Query("DELETE FROM chat_details WHERE address = :address")
     suspend fun deleteConversation(address: String): Int
+
+    @Query("DELETE FROM messages WHERE chatId IN (:chatIds)")
+    suspend fun deleteMessagesByChatIds(chatIds: List<Long>)
 }

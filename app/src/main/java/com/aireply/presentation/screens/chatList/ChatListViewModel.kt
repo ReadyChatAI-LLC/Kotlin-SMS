@@ -5,9 +5,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aireply.data.local.SmsReceiver
 import com.aireply.data.local.dataStore.SettingsDataStore
 import com.aireply.data.local.repositories.LocalSmsRepository
+import com.aireply.domain.models.ChatSummaryModel
 import com.aireply.presentation.screens.chatList.components.SmsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -55,6 +57,31 @@ class ChatListViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("prueba", "Error al cargar los mensajes - loadMessages de ChatListViewModel")
                 _uiState.value = SmsUiState.Error(e.message ?: "Unknown Error")
+            }
+        }
+    }
+
+    fun deleteChat(chatsToBeDeleted: List<Int>, summaries: List<ChatSummaryModel>){
+        val addresses: List<String> = summaries.filter { it.id in chatsToBeDeleted }
+            .map { it.address }
+
+        viewModelScope.launch {
+            try {
+                localSmsRepository.deleteChat(addresses)
+            }catch (e: Exception){
+                Log.e("prueba", "Fallo el eliminar chats: ${e.message}")
+                _uiState.value = SmsUiState.Error("Deletion Chats Failed: ${e.message}")
+            }
+        }
+    }
+
+    fun archiveChats(chatToBeArchived: List<Int>){
+        viewModelScope.launch {
+            try {
+                localSmsRepository.updateArchivedChats(true, chatToBeArchived)
+            }catch (e: Exception){
+                Log.e("prueba", "Fallo el archivar chat: ${e.message}")
+                _uiState.value = SmsUiState.Error("Archived Chats Failed: ${e.message}")
             }
         }
     }

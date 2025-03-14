@@ -7,12 +7,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aireply.data.local.SmsReceiver
 import com.aireply.data.local.SmsSendService
 import com.aireply.data.local.repositories.LocalSmsRepository
 import com.aireply.domain.models.MessageModel
 import com.aireply.domain.models.TextMessageModel
-import com.aireply.presentation.screens.chatDetails.components.ChatDetailsState
+import com.aireply.presentation.screens.shared.ChatDetailsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
