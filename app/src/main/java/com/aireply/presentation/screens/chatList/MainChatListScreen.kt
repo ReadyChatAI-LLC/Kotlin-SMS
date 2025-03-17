@@ -1,41 +1,40 @@
 package com.aireply.presentation.screens.chatList
 
-import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aireply.presentation.screens.chatList.components.ChatList
 import com.aireply.presentation.screens.shared.ShimmerEffect
-import com.aireply.presentation.screens.shared.ErrorMessage
+import com.aireply.presentation.screens.shared.ErrorScreen
 import com.aireply.presentation.screens.chatList.components.SmsUiState
 
 @Composable
-fun ChatListScreen(
+fun MainChatListScreen(
     viewModel: ChatListViewModel = hiltViewModel(),
-    navigateToChat: (String) -> Unit,
+    navigateToChatDetails: (String) -> Unit,
     navigateToSettings: () -> Unit,
     navigateToStartChat: () -> Unit,
-    navigateToSetDefaultScreen: () -> Unit
+    navigateToSetDefaultScreen: () -> Unit,
+    navigateToArchivedChats: () -> Unit
 ) {
-
-    Log.d("prueba", "Entro a ChatListScreen")
 
     val uiState by viewModel.uiState
 
     when (val state = uiState) {
         is SmsUiState.Loading -> {
-            LaunchedEffect(Unit) { viewModel.loadMessages() }
             ShimmerEffect()
         }
 
         is SmsUiState.Success -> ChatList(
-            smsChats = state.messages,
+            chatSummaries = state.messages,
             navigateToSettings = { navigateToSettings() },
-            navigateToChat = { navigateToChat(it) },
-            navigateToStartChat = {navigateToStartChat()},
-            navigateToSetDefaultScreen = {navigateToSetDefaultScreen()})
+            navigateToChat = { navigateToChatDetails(it) },
+            navigateToStartChat = { navigateToStartChat() },
+            navigateToSetDefaultScreen = { navigateToSetDefaultScreen() },
+            onDeletionChat = { viewModel.deleteChat(it.toList(), state.messages) },
+            onArchiveChat = { viewModel.archiveChats(it.toList()) },
+            navigateToChatsArchived = { navigateToArchivedChats() })
 
-        is SmsUiState.Error -> ErrorMessage(state.message)
+        is SmsUiState.Error -> ErrorScreen(errorMessage = state.message, onRetry = {}, onBack = {})
     }
 }

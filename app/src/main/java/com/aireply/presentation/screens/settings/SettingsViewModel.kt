@@ -15,7 +15,6 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     //private val settingsDataStore: SettingsDataStore
-    private val settingsDataStore: SettingsDataStore
 ) : ViewModel() {
 
     private val _settingsState = mutableStateOf(
@@ -24,18 +23,11 @@ class SettingsViewModel @Inject constructor(
             readyChatPrompt = "",
             dateActive = false,
             dateRangeStart = "",
-            dateRangeEnd = ""
+            dateRangeEnd = "",
+            appStarted = false
         )
     )
     val settingsState: State<Settings> get() = _settingsState
-
-    init {
-        viewModelScope.launch {
-            settingsDataStore.settingsFlow.collect { settings ->
-                _settingsState.value = settings
-            }
-        }
-    }
 
     fun onReadyChatActiveChanged(newValue: Boolean) {
         _settingsState.value = _settingsState.value.copy(readyChatActive = newValue)
@@ -58,24 +50,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun saveSettings() {
-        viewModelScope.launch {
-            if (_settingsState.value.dateActive) {
-                val validTimeRange = TimeRangeValidator.isValidTimeRange(
-                    _settingsState.value.dateRangeStart,
-                    _settingsState.value.dateRangeEnd
-                )
-                if (!validTimeRange) {
-                    Log.e("prueba", "El rango de horas es inválido: la hora de inicio debe ser anterior a la hora de fin.")
-                    return@launch
-                }
-            }
-            settingsDataStore.updateReadyChatActive(_settingsState.value.readyChatActive)
-            settingsDataStore.updateReadyChatPrompt(_settingsState.value.readyChatPrompt)
-            settingsDataStore.updateDateActive(_settingsState.value.dateActive)
-            settingsDataStore.updateDateRange(
-                _settingsState.value.dateRangeStart,
-                _settingsState.value.dateRangeEnd
-            )
-        }
+        Log.d("prueba", "SettingsViewModel -> saveSettings method. Nothing will happen")
     }
 }

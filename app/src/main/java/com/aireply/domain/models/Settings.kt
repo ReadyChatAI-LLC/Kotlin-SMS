@@ -5,5 +5,6 @@ data class Settings(
     val readyChatPrompt: String,
     val dateActive: Boolean,
     val dateRangeStart: String,
-    val dateRangeEnd: String
+    val dateRangeEnd: String,
+    val appStarted: Boolean
 )
