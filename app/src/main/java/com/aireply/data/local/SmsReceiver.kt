@@ -12,10 +12,9 @@ import android.os.Build
 import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.util.Log
-import com.aireply.domain.models.SmsChat
-import androidx.compose.ui.graphics.Color
 import androidx.core.app.NotificationCompat
 import com.aireply.data.local.dataStore.SmsReplyReceiver
+import com.aireply.domain.models.TextMessageModel
 
 private const val CHANNEL_ID = "sms_channel"
 private const val KEY_TEXT_REPLY = "key_text_reply"
