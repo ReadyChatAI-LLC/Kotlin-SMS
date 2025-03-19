@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.aireply"
+    namespace = "com.readychat"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aireply"
+        applicationId = "com.readychat"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
