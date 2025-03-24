@@ -40,6 +40,7 @@ class SmsSendService : Service() {
                 smsManager.sendTextMessage(phoneNumber, null, message, null, null)
                 Log.d("prueba", "Mensaje enviado a $phoneNumber")
 
+
                 saveSentSms(phoneNumber, message)
 
             } catch (e: Exception) {
