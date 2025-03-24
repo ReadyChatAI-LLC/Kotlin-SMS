@@ -12,6 +12,7 @@ import com.readychat.data.local.repositories.LocalSmsRepository
 import com.readychat.domain.models.MessageModel
 import com.readychat.domain.models.TextMessageModel
 import com.readychat.presentation.screens.shared.ChatDetailsState
+import com.readychat.presentation.screens.shared.SmsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,6 +24,9 @@ class ChatDetailsViewModel @Inject constructor(
 
     private val _address = mutableStateOf("")
     val address: State<String> get() = _address
+
+    private val _smsState = mutableStateOf<SmsState?>(null)
+    val smsState: State<SmsState?> get() = _smsState
 
     private val _messageText = mutableStateOf("")
     val messageText: State<String> get() = _messageText
@@ -59,9 +63,19 @@ class ChatDetailsViewModel @Inject constructor(
 
     fun sendMessage(textMessage: TextMessageModel, context: Context) {
         viewModelScope.launch {
-            localSmsRepository.addTextMessage(textMessage)
+            _smsState.value = SmsState.Sending
+            Log.d("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
+
+            try {
+                localSmsRepository.addTextMessage(textMessage)
+                sendSms(context, textMessage)
+                _smsState.value = SmsState.Sent
+                Log.d("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
+            } catch (e: Exception) {
+                _smsState.value = SmsState.Error(e.message ?: "Error desconocido")
+                Log.e("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
+            }
         }
-        sendSms(context, textMessage)
     }
 
     fun updateMessageText(messageText: String) {
