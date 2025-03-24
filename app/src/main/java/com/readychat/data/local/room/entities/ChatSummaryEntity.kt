@@ -1,4 +1,4 @@
-package com.readychat.data.local.room.entity
+package com.readychat.data.local.room.entities
 
 import androidx.room.Entity
 import androidx.room.Index

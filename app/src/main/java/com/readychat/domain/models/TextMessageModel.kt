@@ -1,6 +1,6 @@
 package com.readychat.domain.models
 
-import com.readychat.data.local.room.entity.MessageEntity
+import com.readychat.data.local.room.entities.MessageEntity
 
 data class TextMessageModel(
     val sender: String,

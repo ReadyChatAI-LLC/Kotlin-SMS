@@ -8,6 +8,8 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -22,8 +24,10 @@ import com.readychat.presentation.screens.contacts.ContactsScreen
 @Composable
 fun NavigationWrapper() {
 
-    Log.d("prueba", "NavigationWrapper Iniciada y ejecutando")
     val navController = rememberNavController()
+
+    Log.d("prueba", "NavigationWrapper Iniciada y ejecutando")
+
     val context = LocalContext.current
 
     val packageName = context.packageName
@@ -69,9 +73,9 @@ fun NavigationWrapper() {
         }
 
         composable<DefaultSmsRoute> {
-            DefaultSmsScreen {
+            DefaultSmsScreen(onSetDefaultApp = {
                 navController.navigate(ChatListRoute)
-            }
+            })
         }
 
         composable<ContactsRoute> {

@@ -1,7 +1,7 @@
 package com.readychat.domain.models
 
 import androidx.compose.ui.graphics.Color
-import com.readychat.data.local.room.entity.ChatSummaryEntity
+import com.readychat.data.local.room.entities.ChatSummaryEntity
 import com.readychat.util.Converters
 
 data class ChatSummaryModel(

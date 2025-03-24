@@ -2,8 +2,8 @@ package com.readychat.domain.models
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.readychat.data.local.room.entity.ChatDetailsEntity
-import com.readychat.data.local.room.entity.MessageEntity
+import com.readychat.data.local.room.entities.ChatDetailsEntity
+import com.readychat.data.local.room.entities.MessageEntity
 
 data class ChatDetailsModel(
     val id: Long = 0,
@@ -12,7 +12,8 @@ data class ChatDetailsModel(
     var accountLogoColor: Color,
     var archivedChat: Boolean = false,
     var updatedAt: Long,
-    var chatList: MutableList<MessageModel>
+    var chatList: MutableList<MessageModel>,
+    val mmsList: MutableList<MmsMessageModel> = mutableListOf()
 )
 
 data class MessageModel(

@@ -6,9 +6,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import com.readychat.data.local.room.entity.ChatDetailsEntity
-import com.readychat.data.local.room.entity.ChatWithMessages
-import com.readychat.data.local.room.entity.MessageEntity
+import com.readychat.data.local.room.entities.ChatDetailsEntity
+import com.readychat.data.local.room.entities.ChatWithMessages
+import com.readychat.data.local.room.entities.MessageEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

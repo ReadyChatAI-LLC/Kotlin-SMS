@@ -6,7 +6,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.Telephony
 import android.util.Log
-import com.readychat.data.local.room.entity.ChatDetailsEntity
+import com.readychat.data.local.room.entities.ChatDetailsEntity
 import com.readychat.domain.models.ChatDetailsModel
 import com.readychat.domain.models.ChatSummaryModel
 import com.readychat.domain.models.MessageModel

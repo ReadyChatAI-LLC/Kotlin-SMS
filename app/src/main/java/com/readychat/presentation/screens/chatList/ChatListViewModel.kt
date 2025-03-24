@@ -23,6 +23,8 @@ class ChatListViewModel @Inject constructor(
     private val _uiState = mutableStateOf<SmsUiState>(SmsUiState.Loading)
     val uiState: State<SmsUiState> get() = _uiState
 
+    // REVISAR FUNCION INIT
+
     init {
         viewModelScope.launch {
             settingsDataStore.appStartedFlow.collect{ value ->

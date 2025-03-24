@@ -4,9 +4,9 @@ import android.util.Log
 import com.readychat.data.local.contentResolver.SmsContentResolver
 import com.readychat.data.local.room.dao.ChatDetailsDao
 import com.readychat.data.local.room.dao.ChatSummaryDao
-import com.readychat.data.local.room.entity.ChatSummaryEntity
-import com.readychat.data.local.room.entity.ChatWithMessages
-import com.readychat.data.local.room.entity.toDomain
+import com.readychat.data.local.room.entities.ChatSummaryEntity
+import com.readychat.data.local.room.entities.ChatWithMessages
+import com.readychat.data.local.room.entities.toDomain
 import com.readychat.domain.models.ChatDetailsModel
 import com.readychat.domain.models.ChatSummaryModel
 import com.readychat.domain.models.MessageModel
