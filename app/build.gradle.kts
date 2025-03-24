@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.readychat"
+    namespace = "com.readychat.smsbase"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.readychat"
+        applicationId = "com.readychat.smsbase"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
