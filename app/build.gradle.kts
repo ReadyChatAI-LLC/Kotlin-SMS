@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.aireply"
+    namespace = "com.readychat.smsbase"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aireply"
+        applicationId = "com.readychat.smsbase"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
@@ -99,6 +99,9 @@ dependencies {
 
     // libphonenumber
     implementation(libs.libphonenumber)
+
+    // Coil (image handler)
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

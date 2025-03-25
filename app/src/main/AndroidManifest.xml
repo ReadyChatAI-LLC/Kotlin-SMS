@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
-        android:name=".di.MyApp"
+        android:name=".smsbase.di.MyApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -29,9 +29,8 @@
         tools:targetApi="31">
 
         <activity
-            android:name=".presentation.activities.MainActivity"
+            android:name=".smsbase.presentation.activities.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.AIReplyKotlin">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,8 +38,18 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
-            android:name=".presentation.activities.SmsActivity"
+            android:name=".smsbase.presentation.activities.SmsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -59,7 +68,7 @@
         </receiver>
 
         <receiver
-            android:name=".data.local.SmsReceiver"
+            android:name=".smsbase.data.local.SmsReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS" >
             <intent-filter>
@@ -67,7 +76,7 @@
             </intent-filter>
         </receiver> <!-- MMS Receiver -->
         <receiver
-            android:name=".data.local.MmsReceiver"
+            android:name=".smsbase.data.local.MmsReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_WAP_PUSH" >
             <intent-filter>
@@ -77,7 +86,7 @@
             </intent-filter>
         </receiver> <!-- SMS Activity -->
         <service
-            android:name=".data.local.SmsSendService"
+            android:name=".smsbase.data.local.SmsSendService"
             android:exported="true"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
             <intent-filter>
