@@ -33,7 +33,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -41,6 +42,7 @@ android {
             buildConfigField("String", "AIREPLY_KEY", localProperties.getProperty("AIREPLY_KEY"))
         }
         debug {
+            isMinifyEnabled = false
             buildConfigField("String", "AIREPLY_KEY", localProperties.getProperty("AIREPLY_KEY"))
         }
     }
