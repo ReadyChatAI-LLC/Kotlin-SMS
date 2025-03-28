@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import com.readychat.smsbase.data.local.room.entities.ChatSummaryEntity
 import com.readychat.smsbase.util.Converters
 
+
+// No se maneja variable contactSaved ya que no tiene relevancia
 data class ChatSummaryModel(
     val id: Int = 0,
     val address: String,

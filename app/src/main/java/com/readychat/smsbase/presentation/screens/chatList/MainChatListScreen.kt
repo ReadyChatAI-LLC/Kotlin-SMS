@@ -1,7 +1,10 @@
 package com.readychat.smsbase.presentation.screens.chatList
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.readychat.smsbase.presentation.screens.chatList.components.ChatList
 import com.readychat.smsbase.presentation.screens.shared.ShimmerEffect

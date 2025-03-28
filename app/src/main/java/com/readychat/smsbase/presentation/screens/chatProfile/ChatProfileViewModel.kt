@@ -30,7 +30,7 @@ class ChatProfileViewModel @Inject constructor(
                     _uiState.value = ChatDetailsState.Success(chatDetails)
                 }
             } catch (e: Exception) {
-                Log.e("prueba", "ChatViewModel ERROR: ${e.message}")
+                Log.e("prueba", "ChatProfileViewModel ERROR: ${e.message}")
                 _uiState.value = ChatDetailsState.Error("Error: ${e.message}")
             }
         }

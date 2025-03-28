@@ -19,3 +19,37 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+# Serialization
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+-keep,includedescriptorclasses class kotlinx.serialization.**{ *; }
+-keep class kotlinx.serialization.json.**{ *; }
+
+# Dagger Hilt
+-keepnames @dagger.hilt.android.AndroidEntryPoint class *
+-keepnames class * extends androidx.navigation.NavArgs
+-keep class * extends androidx.navigation.NavType
+-keepclassmembers class * {
+    @dagger.hilt.android.lifecycle.HiltViewModel *;
+}
+
+# Room
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-dontwarn androidx.room.paging.**
+
+# Navigation Compose
+-keep class androidx.navigation.**{ *; }
+-keepclassmembers class * implements androidx.navigation.NavArgs { *; }
+
+# Coil
+-keep class coil.**{ *; }
+-keep class io.coil_kt.**{ *; }
+
+# Libphonenumber
+-keep class com.google.i18n.phonenumbers.**{ *; }
+
+# DataStore
+-keep class androidx.datastore.**{ *; }

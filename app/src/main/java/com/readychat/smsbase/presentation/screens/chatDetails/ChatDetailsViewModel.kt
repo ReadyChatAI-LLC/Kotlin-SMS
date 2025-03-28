@@ -48,8 +48,8 @@ class ChatDetailsViewModel @Inject constructor(
                     _uiState.value = ChatDetailsState.Success(chatDetails)
                 }
             } catch (e: Exception) {
-                Log.e("prueba", "ChatViewModel ERROR: ${e.message}")
-                _uiState.value = ChatDetailsState.Error(e.message ?: "Unknown Error")
+                Log.e("prueba", "ChatDetailsViewModel ERROR: ${e.message}")
+                _uiState.value = ChatDetailsState.Error("ChatDetailsViewModel -> ${e.message ?: "Unknown Error"}")
             }
         }
     }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -157,7 +158,7 @@ fun ChatList(
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(start = 10.dp, end = 10.dp, top = 10.dp)
+                //.padding(start = 10.dp, end = 10.dp, top = 10.dp)
                 .fillMaxSize()
         ) {
             items(chatSummaries) { chat ->
@@ -174,12 +175,11 @@ fun ChatList(
                     },
                     navigateToChat = navigateToChat
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
             item {
                 TextButton(
                     onClick = { navigateToChatsArchived() },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -187,8 +187,8 @@ fun ChatList(
                 ) {
                     Text(
                         "Archived Chats",
-                        modifier = Modifier,
-                        fontSize = 14.sp
+                        modifier = Modifier.padding(5.dp),
+                        fontSize = 16.sp
                     )
                 }
             }
