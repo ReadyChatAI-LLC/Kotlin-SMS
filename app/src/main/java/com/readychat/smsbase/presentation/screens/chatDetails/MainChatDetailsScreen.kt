@@ -10,6 +10,7 @@ import com.readychat.smsbase.presentation.screens.shared.ShimmerEffect
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.platform.LocalContext
 import com.readychat.smsbase.presentation.screens.shared.ErrorScreen
+import com.readychat.smsbase.util.PhoneNumberParser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,16 +18,14 @@ fun MainChatDetailsScreen(
     viewModel: ChatDetailsViewModel = hiltViewModel(),
     address: String,
     onBack: () -> Unit,
-    onTopBarClick: (String) -> Unit
+    onProfileClick: (String) -> Unit
 ) {
-
-    Log.d("prueba", "Address: $address")
 
     val chatDetailsState by viewModel.uiState
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.updateAddress(address)
+        viewModel.updateAddress(PhoneNumberParser.getCleanPhoneNumber(address).number)
     }
 
     when (val state = chatDetailsState) {
@@ -63,12 +62,15 @@ fun MainChatDetailsScreen(
                         viewModel.removeMessages(selectedMessages, null, null)
                     }
                 },
-                onTopBarClick = {onTopBarClick(state.chatDetails.address)})
+                onProfileClick = {
+                    Log.i("prueba", "MainChatDetialsScreen en OnProfileClick, address es: $address")
+                    onProfileClick(address)
+                })
         }
 
         is ChatDetailsState.Error -> ErrorScreen(
             titleTopBar = address,
-            errorMessage = state.message,
+            errorMessage = "MainChatDetailsScreen -> ${state.message}",
             onRetry = {},
             onBack = { onBack() })
     }

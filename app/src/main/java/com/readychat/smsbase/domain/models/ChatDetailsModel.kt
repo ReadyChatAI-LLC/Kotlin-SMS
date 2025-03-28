@@ -7,11 +7,13 @@ import com.readychat.smsbase.data.local.room.entities.MessageEntity
 
 data class ChatDetailsModel(
     val id: Long = 0,
+    val contactId: String = "",
     var address: String,
     var contact: String,
     var accountLogoColor: Color,
     var archivedChat: Boolean = false,
     var updatedAt: Long,
+    var contactSaved: Boolean = true,
     var chatList: MutableList<MessageModel>,
     val mmsList: MutableList<MmsMessageModel> = mutableListOf()
 )

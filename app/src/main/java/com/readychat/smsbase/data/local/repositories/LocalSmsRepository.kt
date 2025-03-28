@@ -102,15 +102,19 @@ class LocalSmsRepository @Inject constructor(
     }
 
     suspend fun isChatAddressSaved(longAddress: String): Boolean = withContext(Dispatchers.IO) {
-        val address = PhoneNumberParser.phoneNumberParser(longAddress)
-
-        chatDetailsDao.isChatAddressSaved(address)
+        Log.i("prueba", "Checking initial number: 1")
+        chatDetailsDao.isChatAddressSaved(PhoneNumberParser.phoneNumberParser(longAddress))
     }
 
     suspend fun loadChatDetailsToRoom(address: String) = withContext(Dispatchers.IO) {
+        Log.i("prueba", "Checking initial number: 2")
+        Log.d("prueba", "0")
         val chatsDetails = smsContentResolver.getChatDetailsByNumber(address)
+        Log.d("prueba", "3")
 
         val chatId = chatDetailsDao.insertChat(chatsDetails.toMessageEntity())
+
+        Log.d("prueba", "4")
 
         val insertedChat =
             chatDetailsDao.insertMessages(chatsDetails.chatList.map { it.toMessageEntity(chatId) })

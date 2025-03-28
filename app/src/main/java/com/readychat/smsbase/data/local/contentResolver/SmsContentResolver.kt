@@ -11,6 +11,7 @@ import com.readychat.smsbase.domain.models.ChatDetailsModel
 import com.readychat.smsbase.domain.models.ChatSummaryModel
 import com.readychat.smsbase.domain.models.MessageModel
 import com.readychat.smsbase.util.Converters
+import com.readychat.smsbase.util.NumberAndCountryCodeObj
 import com.readychat.smsbase.util.PhoneNumberParser
 import com.readychat.smsbase.util.RandomColor
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -71,23 +72,31 @@ class SmsContentResolver @Inject constructor(
 
     suspend fun getChatDetailsByNumber(longAddress: String): ChatDetailsModel =
         withContext(Dispatchers.IO) {
-            val address = PhoneNumberParser.phoneNumberParser(longAddress)
-            Log.d("prueba", "Buscando mensajes de $longAddress -> $address. getChatDetailsByNumber de SmsContentResolver")
+            // El numero no es reconocido con el codigo de pais (+1 por ejm)
+            val address = PhoneNumberParser.getCleanPhoneNumber(longAddress)
+            Log.d("prueba", "Buscando mensajes de $longAddress -> ${address.number}. getChatDetailsByNumber de SmsContentResolver")
             val list = querySmsChats(
                 selection = "${Telephony.Sms.ADDRESS} = ?",
-                selectionArgs = arrayOf(address),
+                selectionArgs = arrayOf(address.number),
                 isFetchingSummaryChats = false
             )
+
+            Log.d("prueba", "1")
 
             val chats = list.filterIsInstance<MessageModel>()
 
             val sortedSmsChats = chats.sortedBy { it.timeStamp }
 
+            val contactName = getContactName(address.number)
+
+            Log.d("prueba", "2")
+
             ChatDetailsModel(
-                address = address,
-                contact = getContactName(address)?: address,
+                address = longAddress,
+                contact = contactName?: longAddress,
                 accountLogoColor = RandomColor.randomColor(),
                 updatedAt = System.currentTimeMillis(),
+                contactSaved = contactName == null,
                 archivedChat = false,
                 chatList = sortedSmsChats.toMutableList()
             )
@@ -131,18 +140,23 @@ class SmsContentResolver @Inject constructor(
                 val status = cursor.getString(statusIndex)
 
                 if (isFetchingSummaryChats) {
-                    if (!contactsCache.contains(cursor.getString(addressIndex))) {
+
+                    val cleanPhoneNumber = PhoneNumberParser.getCleanPhoneNumber(cursor.getString(addressIndex))
+
+                    if (!contactsCache.contains(cleanPhoneNumber.number)) {
                         contactsCache.add(address)
+
+                        val finalAddress = "${cleanPhoneNumber.countryCode ?: ""}${cleanPhoneNumber.number}"
 
                         chatSummaries.add(
                             ChatSummaryModel(
                                 id = 0,
-                                address = PhoneNumberParser.normalizePhoneNumber(address),
+                                address = finalAddress,
                                 content = body,
                                 timeStamp = date.toLong(),
                                 status = status,
                                 type = type,
-                                contact = getContactName(address)?: PhoneNumberParser.normalizePhoneNumber(address),
+                                contact = getContactName(address)?: finalAddress,
                                 updatedAt = date.toLong(),
                                 archivedChat = false,
                                 accountLogoColor = RandomColor.randomColor()
@@ -193,7 +207,8 @@ class SmsContentResolver @Inject constructor(
                 val address = it.getString(numberIndex) ?: "Unknown"
                 if (!contactsMap.containsKey(id)) {
                     contactsMap[id] = ChatDetailsEntity(
-                        address = PhoneNumberParser.normalizePhoneNumber(address),
+                        contactId = id,
+                        address = PhoneNumberParser.normalizePhoneNumber(address).trim(),
                         contact = contact,
                         accountLogoColor = Converters.fromColor(RandomColor.randomColor()),
                         archivedChat = false,

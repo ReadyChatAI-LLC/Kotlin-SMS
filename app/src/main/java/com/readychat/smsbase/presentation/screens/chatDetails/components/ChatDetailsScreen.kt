@@ -1,6 +1,7 @@
 package com.readychat.smsbase.presentation.screens.chatDetails.components
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -53,7 +54,7 @@ fun ChatDetailsScreen(
     onBack: () -> Unit,
     onNewMessageSent: (TextMessageModel) -> Unit,
     removeMessage: (Set<Int>) -> Unit,
-    onTopBarClick: () -> Unit
+    onProfileClick: () -> Unit
 ) {
 
     var selectedMessageIds by remember { mutableStateOf(setOf<Int>()) }
@@ -66,7 +67,9 @@ fun ChatDetailsScreen(
     Scaffold(topBar = {
         TopAppBar(
             title = {
-                TextButton(onClick = { onTopBarClick() }) {
+                TextButton(onClick = {
+                    Log.i("prueba", "ChatDetailsSCreen en OnProfileClick, address es: ${messages.address}")
+                    onProfileClick() }) {
                     Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else messages.contact,
                         fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
                 }
@@ -194,7 +197,6 @@ fun MessageBubble(
     val boxColor = if (isSelected) Color(0xFFC9CBCB).copy(alpha = 0.3f) else Color.Transparent
 
     val messageId = message.messageId
-
 
     Box(
         modifier = Modifier

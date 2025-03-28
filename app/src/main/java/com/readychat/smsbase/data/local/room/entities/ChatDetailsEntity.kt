@@ -28,11 +28,13 @@ data class ChatWithMessages(
 data class ChatDetailsEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val contactId: String = "",
     val address: String,
     val contact: String,
     val accountLogoColor: Int, // ARGB guardado
     val archivedChat: Boolean,
-    val updatedAt: Long
+    val updatedAt: Long,
+    var contactSaved: Boolean = true,
 )
 
 @Entity(

@@ -29,7 +29,7 @@ interface ChatDetailsDao {
     @Query("SELECT * FROM chat_details WHERE address = :address")
     fun getChatWithMessages(address: String): Flow<ChatWithMessages>
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertContacts(contacts: List<ChatDetailsEntity>): List<Long>
 
     @Query("SELECT * FROM chat_details")
