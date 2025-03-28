@@ -188,7 +188,7 @@ fun MessageBubble(
     val isFromMe = message.type.toInt() == 2
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
     val bubbleColor =
-        if (isFromMe) Color(0xFF85929e) else MaterialTheme.colorScheme.surfaceContainerHigh
+        if (isFromMe) Color(0xFF85929e) else Color(0xFF054D67)
     val textColor = if (isFromMe) Color.Black else Color.White
     val textAlign = if (isFromMe) TextAlign.End else TextAlign.Start
     val boxColor = if (isSelected) Color(0xFFC9CBCB).copy(alpha = 0.3f) else Color.Transparent
