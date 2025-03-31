@@ -1,25 +1,25 @@
 package com.readychat.smsbase.presentation.navigation
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.provider.Telephony
 import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.readychat.smsbase.presentation.viewmodel.MainViewModel
 import com.readychat.smsbase.presentation.screens.chatList.MainChatListScreen
 import com.readychat.smsbase.presentation.screens.chatDetails.MainChatDetailsScreen
 import com.readychat.smsbase.presentation.screens.chatList.chatArchived.MainChatArchivedScreen
@@ -27,55 +27,57 @@ import com.readychat.smsbase.presentation.screens.chatProfile.MainChatProfileScr
 import com.readychat.smsbase.presentation.screens.defaultSms.DefaultSmsScreen
 import com.readychat.smsbase.presentation.screens.settings.SettingsScreen
 import com.readychat.smsbase.presentation.screens.contacts.ContactsScreen
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavHost
+import androidx.navigation.NavHostController
 
 @Composable
-fun NavigationWrapper() {
+fun NavigationWrapper(
+    viewModel: MainViewModel = hiltViewModel()
+) {
 
     val navController = rememberNavController()
 
-    Log.d("prueba", "NavigationWrapper Iniciada y ejecutando")
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
-    val context = LocalContext.current
+    val shouldShowPermissionScreen by viewModel.shouldShowPermissionScreen.collectAsState()
 
-    val packageName = context.packageName
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.checkPermissions()
+            }
+        }
 
-    val isDefaultSmsApp = Telephony.Sms.getDefaultSmsPackage(context) == packageName
-    val contactPermissionGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.READ_CONTACTS
-    ) == PackageManager.PERMISSION_GRANTED
+        lifecycleOwner.lifecycle.addObserver(observer)
 
-    val startDestination =
-        if (isDefaultSmsApp && contactPermissionGranted) ChatListRoute else DefaultSmsRoute
-
-    val slideEnterTransition: AnimatedContentTransitionScope<*>.() -> EnterTransition = {
-        slideIntoContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Start,
-            animationSpec = tween(200)
-        )
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
-    val slideExitTransition: AnimatedContentTransitionScope<*>.() -> ExitTransition = {
-        slideOutOfContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(100)
-        )
+    LaunchedEffect(shouldShowPermissionScreen) {
+        if (shouldShowPermissionScreen) {
+            val currentRoute = navController.currentDestination?: ChatListRoute
+            if (currentRoute != DefaultSmsRoute) {
+                navController.navigate(DefaultSmsRoute) {
+                    navController.currentDestination?.route?.let { current ->
+                        popUpTo(current) { inclusive = true }
+                    }
+                    launchSingleTop = true
+                }
+            }
+        }
     }
 
     NavHost(
-        navController = navController, startDestination = startDestination,
-        enterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(200)
-            )
-        },
-        exitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(100)
-            )
-        },
+        navController = navController, startDestination = ChatListRoute,
+        enterTransition = NavTransitions.enterTransition,
+        exitTransition = NavTransitions.exitTransition,
+        popEnterTransition = NavTransitions.popEnterTransition,
+        popExitTransition = NavTransitions.popExitTransition
     ) {
         composable<ChatListRoute> {
             Log.d("prueba", "Navegando a ChatListScreen")
@@ -95,61 +97,40 @@ fun NavigationWrapper() {
                 })
         }
 
-        composable<ChatDetailsRoute>(
-            enterTransition = slideEnterTransition,
-            exitTransition = slideExitTransition
-        ) { backStackEntry ->
+        composable<ChatDetailsRoute> { backStackEntry ->
             val phoneNumber: ChatDetailsRoute = backStackEntry.toRoute()
             MainChatDetailsScreen(
                 address = phoneNumber.phoneNumber,
                 onBack = {
-                    navController.navigate(ChatListRoute) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    navController.popBackStack()
                 },
                 onProfileClick = { address -> navController.navigate(ChatProfileRoute(address)) })
         }
 
-        composable<SettingsRoute>(
-            enterTransition = slideEnterTransition,
-            exitTransition = slideExitTransition
-        ) {
+        composable<SettingsRoute> {
             SettingsScreen { navController.popBackStack() }
         }
 
-        composable<DefaultSmsRoute>(
-            enterTransition = { fadeIn(animationSpec = tween(200)) },
-            exitTransition = { fadeOut(animationSpec = tween(100)) }
-        ) {
+        composable<DefaultSmsRoute> {
             DefaultSmsScreen(onSetDefaultApp = {
                 navController.navigate(ChatListRoute)
             })
         }
 
-        composable<ContactsRoute>(
-            enterTransition = slideEnterTransition,
-            exitTransition = slideExitTransition
-        ) {
+        composable<ContactsRoute>{
             ContactsScreen(onContactClick = { phoneNumber ->
                 navController.navigate(ChatDetailsRoute(phoneNumber))
             }, onBack = { navController.popBackStack() })
         }
 
-        composable<ChatProfileRoute>(
-            enterTransition = slideEnterTransition,
-            exitTransition = slideExitTransition
-        ) { backStackEntry ->
+        composable<ChatProfileRoute> { backStackEntry ->
             val phoneNumber: ChatDetailsRoute = backStackEntry.toRoute()
             MainChatProfileScreen(
                 address = phoneNumber.phoneNumber,
                 onBack = { navController.popBackStack() })
         }
 
-        composable<ArchivedChatsRoute>(
-            enterTransition = slideEnterTransition,
-            exitTransition = slideExitTransition
-        ) {
+        composable<ArchivedChatsRoute> {
             MainChatArchivedScreen(
                 navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
                 onBack = { navController.popBackStack() }

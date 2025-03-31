@@ -10,6 +10,7 @@ import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
 import com.readychat.smsbase.data.local.room.dao.ChatDetailsDao
 import com.readychat.smsbase.data.local.room.dao.ChatSummaryDao
 import com.readychat.smsbase.data.local.room.database.AppDatabase
+import com.readychat.smsbase.presentation.viewmodel.util.PermissionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,5 +56,11 @@ object AppModule {
     @Singleton
     fun provideLocalSmsRepository(smsContentResolver: SmsContentResolver, chatSummaryDao: ChatSummaryDao, chatDetailsDao: ChatDetailsDao): LocalSmsRepository{
         return LocalSmsRepository(smsContentResolver, chatSummaryDao, chatDetailsDao)
+    }
+
+    @Provides
+    @Singleton
+    fun providePermissionManager(@ApplicationContext context: Context): PermissionManager {
+        return PermissionManager(context)
     }
 }

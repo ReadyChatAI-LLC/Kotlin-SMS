@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.provider.Telephony
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -53,31 +54,20 @@ fun DefaultSmsScreen(
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    ) { _ ->
         val roleManager = context.getSystemService(Context.ROLE_SERVICE) as RoleManager
         if (roleManager.isRoleHeld(RoleManager.ROLE_SMS)) {
-            Toast.makeText(context, "App predeterminada", Toast.LENGTH_SHORT).show()
-            Log.d("prueba", "Usuario otorgo permisos")
             viewModel.updateIsDefaultApp(true)
-        } else {
-            Toast.makeText(context, "Configuración omitida", Toast.LENGTH_SHORT).show()
-            Log.d("prueba", "Usuario rechazo permisos")
         }
     }
 
     val launcherContacts = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        Log.d("prueba", "Acceso a contactos: $isGranted")
         viewModel.updateContactPermissionGranted(isGranted)
     }
 
     LaunchedEffect(Unit) {
-        Log.d(
-            "prueba",
-            "EN LAUNCHED_EFFECT: concedidos al iniciar aqui?: (IsDefaultApp: $isDefaultApp - Contact: $contactPermissionGranted)"
-        )
-
         val roleManager = context.getSystemService(Context.ROLE_SERVICE) as RoleManager
         val isDefaultSmsApp = roleManager.isRoleHeld(RoleManager.ROLE_SMS)
 
@@ -101,12 +91,8 @@ fun DefaultSmsScreen(
     }
 
     if (isEnabledToNavigate) {
-        Log.d(
-            "prueba",
-            "EJECUTANDO PORQUE IsEnabledToNavigate true"
-        )
+        Toast.makeText(context, "Permissions Granted", Toast.LENGTH_SHORT).show()
         onSetDefaultApp()
-
         viewModel.navigationWasExecuted()
     }
 
@@ -157,15 +143,6 @@ fun DefaultSmsScreen(
         ) {
             launcherContacts.launch(Manifest.permission.READ_CONTACTS)
         }
-
-        /*
-        DefaultSmsButtons(
-            textButton = "Access to read SMS",
-            isEnabledButton = true
-        ) {
-            launcherReadSms.launch(Manifest.permission.READ_SMS)
-        }
-        */
     }
 }
 
