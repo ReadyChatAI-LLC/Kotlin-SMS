@@ -13,8 +13,8 @@ import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
 import com.readychat.smsbase.domain.models.TextMessageModel
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,7 @@ class SmsReceiver : BroadcastReceiver() {
     }
 
     @Inject
-    lateinit var localSmsRepository: LocalSmsRepository
+    lateinit var chatDetailsRepository: IChatDetailsRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("messentrante", "onReceive() llamado con acción: ${intent.action}")
@@ -73,7 +73,7 @@ class SmsReceiver : BroadcastReceiver() {
                         type = "1"
                     )
                     CoroutineScope(Dispatchers.IO).launch {
-                        localSmsRepository.addTextMessage(receivedSms)
+                        chatDetailsRepository.addTextMessage(receivedSms)
                     }
 
                 } catch (e: Exception) {
@@ -123,7 +123,7 @@ class SmsReceiver : BroadcastReceiver() {
 
         val replyAction = NotificationCompat.Action.Builder(
             android.R.drawable.ic_dialog_email,
-            "Responder",
+            "Response",
             replyPendingIntent
         )
             .addRemoteInput(remoteInput)

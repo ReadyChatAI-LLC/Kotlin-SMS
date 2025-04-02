@@ -40,7 +40,7 @@ fun MainChatDetailsScreen(
             val messageText by viewModel.messageText
             ChatDetailsScreen(
                 messageText = messageText,
-                messages = state.chatDetails,
+                chatDetails = state.chatDetails,
                 onMessageTextChange = { viewModel.updateMessageText(it) },
                 onBack = onBack,
                 onNewMessageSent = {textMessage ->

@@ -13,7 +13,7 @@ data class ChatDetailsModel(
     var accountLogoColor: Color,
     var archivedChat: Boolean = false,
     var updatedAt: Long,
-    var contactSaved: Boolean = true,
+    var contactSaved: Boolean,
     var chatList: MutableList<MessageModel>,
     val mmsList: MutableList<MmsMessageModel> = mutableListOf()
 )
@@ -34,6 +34,7 @@ fun ChatDetailsModel.toMessageEntity(): ChatDetailsEntity {
         contact = contact,
         accountLogoColor = accountLogoColor.toArgb(),
         archivedChat = archivedChat,
+        contactSaved = contactSaved,
         updatedAt = updatedAt
     )
 }

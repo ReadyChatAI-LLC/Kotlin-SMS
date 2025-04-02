@@ -5,7 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
 import com.readychat.smsbase.presentation.screens.shared.ChatDetailsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatProfileViewModel @Inject constructor(
-    private val localSmsRepository: LocalSmsRepository
+    private val chatDetailsRepository: IChatDetailsRepository
 ): ViewModel() {
     private val _address = mutableStateOf("")
     val address: State<String> get() = _address
@@ -26,7 +26,7 @@ class ChatProfileViewModel @Inject constructor(
             try {
                 val chatAddress = address.value
 
-                localSmsRepository.getChatDetails(chatAddress).collect { chatDetails ->
+                chatDetailsRepository.getChatDetails(chatAddress).collect { chatDetails ->
                     _uiState.value = ChatDetailsState.Success(chatDetails)
                 }
             } catch (e: Exception) {

@@ -49,7 +49,7 @@ import com.readychat.smsbase.util.FormatDate
 @Composable
 fun ChatDetailsScreen(
     messageText: String,
-    messages: ChatDetailsModel,
+    chatDetails: ChatDetailsModel,
     onMessageTextChange: (String) -> Unit,
     onBack: () -> Unit,
     onNewMessageSent: (TextMessageModel) -> Unit,
@@ -68,9 +68,9 @@ fun ChatDetailsScreen(
         TopAppBar(
             title = {
                 TextButton(onClick = {
-                    Log.i("prueba", "ChatDetailsSCreen en OnProfileClick, address es: ${messages.address}")
+                    Log.i("prueba", "ChatDetailsSCreen en OnProfileClick, address es: ${chatDetails.address}")
                     onProfileClick() }) {
-                    Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else messages.contact,
+                    Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else chatDetails.contact,
                         fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
                 }
             },
@@ -111,7 +111,7 @@ fun ChatDetailsScreen(
         ) {
             MessagesList(
                 modifier = Modifier.weight(1f),
-                messages.chatList,
+                chatDetails.chatList,
                 selectedList = selectedMessageIds,
                 isSelectionMode = isSelectionMode,
                 onMessageSelected = {
@@ -134,7 +134,7 @@ fun ChatDetailsScreen(
 
                         onNewMessageSent(
                             TextMessageModel(
-                                sender = messages.address,
+                                sender = chatDetails.address,
                                 content = messageText.trim(),
                                 timeStamp = System.currentTimeMillis(),
                                 status = "0",

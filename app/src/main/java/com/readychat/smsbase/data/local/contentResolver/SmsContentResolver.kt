@@ -70,8 +70,8 @@ class SmsContentResolver @Inject constructor(
         return chats
     }
 
-    suspend fun getChatDetailsByNumber(longAddress: String): ChatDetailsModel =
-        withContext(Dispatchers.IO) {
+    suspend fun getChatDetailsByNumber(longAddress: String): ChatDetailsModel {
+        return withContext(Dispatchers.IO) {
             // El numero no es reconocido con el codigo de pais (+1 por ejm)
             val address = PhoneNumberParser.getCleanPhoneNumber(longAddress)
             Log.d("prueba", "Buscando mensajes de $longAddress -> ${address.number}. getChatDetailsByNumber de SmsContentResolver")
@@ -81,26 +81,22 @@ class SmsContentResolver @Inject constructor(
                 isFetchingSummaryChats = false
             )
 
-            Log.d("prueba", "1")
-
             val chats = list.filterIsInstance<MessageModel>()
-
             val sortedSmsChats = chats.sortedBy { it.timeStamp }
-
             val contactName = getContactName(address.number)
-
-            Log.d("prueba", "2")
+            val contactSaved = contactName != null
 
             ChatDetailsModel(
                 address = longAddress,
                 contact = contactName?: longAddress,
                 accountLogoColor = RandomColor.randomColor(),
                 updatedAt = System.currentTimeMillis(),
-                contactSaved = contactName == null,
+                contactSaved = contactSaved,
                 archivedChat = false,
                 chatList = sortedSmsChats.toMutableList()
             )
         }
+    }
 
     private suspend fun querySmsChats(
         selection: String? = null,
@@ -151,12 +147,12 @@ class SmsContentResolver @Inject constructor(
                         chatSummaries.add(
                             ChatSummaryModel(
                                 id = 0,
-                                address = finalAddress,
+                                address = finalAddress.ifBlank { "Unknown" },
                                 content = body,
                                 timeStamp = date.toLong(),
                                 status = status,
                                 type = type,
-                                contact = getContactName(address)?: finalAddress,
+                                contact = if(finalAddress.isBlank()) "Unknown" else getContactName(address)?: finalAddress,
                                 updatedAt = date.toLong(),
                                 archivedChat = false,
                                 accountLogoColor = RandomColor.randomColor()

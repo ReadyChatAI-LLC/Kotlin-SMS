@@ -103,6 +103,13 @@ fun ContactsScreen(
             }
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {
+                if (query.isNotEmpty() && query.all { it.isDigit() }) {
+                    item {
+                        StartConversationWithUnknown(query) {
+                            onContactClick(query)
+                        }
+                    }
+                }
                 items(filteredContacts) { contact ->
                     ContactItem(contact, onContactClick)
                 }
@@ -137,6 +144,35 @@ fun ContactItem(contact: ChatDetailsModel, onContactClick: (String) -> Unit) {
         ) {
             Text(text = contact.contact, fontWeight = Bold)
             Text(text = contact.address, style = TextStyle())
+        }
+    }
+}
+
+@Composable
+fun StartConversationWithUnknown(unknownNumber: String, onStartConversationClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onStartConversationClick() }
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.Top
+    ) {
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = "AccountRepresentation",
+            modifier = Modifier
+                .size(50.dp)
+        )
+        Column(
+            modifier = Modifier
+                .padding(start = 5.dp)
+                .fillMaxWidth(0.9f),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(text = "Send to $unknownNumber", fontWeight = Bold)
+            Text(text = unknownNumber, style = TextStyle())
         }
     }
 }

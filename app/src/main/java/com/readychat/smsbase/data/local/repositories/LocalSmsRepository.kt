@@ -21,12 +21,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class LocalSmsRepository @Inject constructor(
+class LocalSmsRepositorys @Inject constructor(
     private val smsContentResolver: SmsContentResolver,
     private val chatSummaryDao: ChatSummaryDao,
     private val chatDetailsDao: ChatDetailsDao
 ) {
 
+    // DONE
     suspend fun getContactByAddress(address: String): String = withContext(Dispatchers.IO) {
         smsContentResolver.getContactName(address) ?: address
     }
@@ -35,19 +36,23 @@ class LocalSmsRepository @Inject constructor(
         return chatSummaryEntity.map { it.toDomain() }
     }
 
+    // DONE
     fun getChatSummaries(): Flow<List<ChatSummaryModel>> {
         return chatSummaryDao.getChatSummaries().map(::mapChatSummaryEntityToDomain)
     }
 
+    // DONE
     fun getArchivedChatSummaries(): Flow<List<ChatSummaryModel>> {
         return chatSummaryDao.getArchivedChatSummaries().map(::mapChatSummaryEntityToDomain)
     }
 
+    // DONE
     suspend fun updateArchivedChats(archivedChat: Boolean, id: List<Int>) =
         withContext(Dispatchers.IO) {
             chatSummaryDao.updateArchivedChats(id, archivedChat)
         }
 
+    // DONE
     suspend fun loadChatSummariesToRoom() = withContext(Dispatchers.IO) {
         val smsChats: List<ChatSummaryEntity> =
             smsContentResolver.getChatsSummaryContentResolver().map { it.toMessageEntity() }
@@ -55,6 +60,7 @@ class LocalSmsRepository @Inject constructor(
         chatSummaryDao.insertChatSummaries(smsChats)
     }
 
+    // DONE
     suspend fun addTextMessage(textMessage: TextMessageModel) = withContext(Dispatchers.IO) {
         Log.d("prueba", "Agregando nuevo mensaje: $textMessage")
 
@@ -87,6 +93,7 @@ class LocalSmsRepository @Inject constructor(
         }
     }
 
+    // DONE
     suspend fun updateChatSummary(summaryEntity: ChatSummaryEntity) = withContext(Dispatchers.IO) {
         chatSummaryDao.updateChatSummary(summaryEntity)
     }
@@ -95,17 +102,20 @@ class LocalSmsRepository @Inject constructor(
         return chatWithMessages.toDomain()
     }
 
+    // DONE
     fun getChatDetails(longAddress: String): Flow<ChatDetailsModel> {
         val address = PhoneNumberParser.phoneNumberParser(longAddress)
         return chatDetailsDao.getChatWithMessages(address)
             .map(::mapChatWithMessagesToDomain)
     }
 
+    // DONE
     suspend fun isChatAddressSaved(longAddress: String): Boolean = withContext(Dispatchers.IO) {
         Log.i("prueba", "Checking initial number: 1")
         chatDetailsDao.isChatAddressSaved(PhoneNumberParser.phoneNumberParser(longAddress))
     }
 
+    // DONE
     suspend fun loadChatDetailsToRoom(address: String) = withContext(Dispatchers.IO) {
         Log.i("prueba", "Checking initial number: 2")
         Log.d("prueba", "0")
@@ -122,20 +132,24 @@ class LocalSmsRepository @Inject constructor(
         Log.d("prueba", "Resultado de importando detalles de un chat a Room: $insertedChat")
     }
 
+    // DONE
     suspend fun getAllContactsName(): List<ChatDetailsModel> = withContext(Dispatchers.IO) {
         chatDetailsDao.getAllContacts().map { it.toDomain() }
     }
 
+    // DONE
     suspend fun searchContact(searchText: String): List<ChatDetailsModel> =
         withContext(Dispatchers.IO) {
             chatDetailsDao.searchContacts(searchText).map { it.toDomain() }
         }
 
+    // DONE
     suspend fun loadContactsToRoom() = withContext(Dispatchers.IO) {
         val contacts = smsContentResolver.getAllContacts()
         chatDetailsDao.insertContacts(contacts)
     }
 
+    // DONE
     suspend fun removeMessages(
         messages: List<MessageModel>,
         addressOnChatSummaryChange: String?,
@@ -156,7 +170,8 @@ class LocalSmsRepository @Inject constructor(
         chatDetailsDao.deleteMessages(messages.map { it.toMessageEntity() })
     }
 
-    suspend fun deleteChat(chatsToBeDeleted: List<String>) = withContext(Dispatchers.IO) {
+    // DONE
+    suspend fun deleteChats(chatsToBeDeleted: List<String>) = withContext(Dispatchers.IO) {
         chatSummaryDao.deleteChatSummariesByAddresses(chatsToBeDeleted)
 
         val chatIds = chatDetailsDao.getChatIdsByAddresses(chatsToBeDeleted)
