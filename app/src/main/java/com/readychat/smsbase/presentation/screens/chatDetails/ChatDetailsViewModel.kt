@@ -8,9 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readychat.smsbase.data.local.SmsSendService
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
 import com.readychat.smsbase.domain.models.MessageModel
 import com.readychat.smsbase.domain.models.TextMessageModel
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
 import com.readychat.smsbase.presentation.screens.shared.ChatDetailsState
 import com.readychat.smsbase.presentation.screens.shared.SmsState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatDetailsViewModel @Inject constructor(
-    private val localSmsRepository: LocalSmsRepository
+    private val chatDetailsRepository: IChatDetailsRepository
 ) : ViewModel() {
 
     private val _address = mutableStateOf("")
@@ -40,16 +40,17 @@ class ChatDetailsViewModel @Inject constructor(
                 _uiState.value = ChatDetailsState.Loading
                 val chatAddress = address.value
 
-                if (!localSmsRepository.isChatAddressSaved(chatAddress)) {
-                    localSmsRepository.loadChatDetailsToRoom(chatAddress)
+                if (!chatDetailsRepository.isChatAddressSaved(chatAddress)) {
+                    chatDetailsRepository.loadChatDetailsToRoom(chatAddress)
                 }
 
-                localSmsRepository.getChatDetails(chatAddress).collect { chatDetails ->
+                chatDetailsRepository.getChatDetails(chatAddress).collect { chatDetails ->
+                    Log.d("prueba", "chatDetailsViewModel -> ${chatDetails.contactSaved}")
                     _uiState.value = ChatDetailsState.Success(chatDetails)
                 }
             } catch (e: Exception) {
-                Log.e("prueba", "ChatViewModel ERROR: ${e.message}")
-                _uiState.value = ChatDetailsState.Error(e.message ?: "Unknown Error")
+                Log.e("prueba", "ChatDetailsViewModel ERROR: ${e.message}")
+                _uiState.value = ChatDetailsState.Error("ChatDetailsViewModel -> ${e.message ?: "Unknown Error"}")
             }
         }
     }
@@ -57,7 +58,7 @@ class ChatDetailsViewModel @Inject constructor(
 
     fun removeMessages(selectedMessages: List<MessageModel>, addressOnChatSummaryChange: String?, newMessage: MessageModel?){
         viewModelScope.launch {
-            localSmsRepository.removeMessages(selectedMessages, addressOnChatSummaryChange, newMessage)
+            chatDetailsRepository.removeMessages(selectedMessages, addressOnChatSummaryChange, newMessage)
         }
     }
 
@@ -67,7 +68,7 @@ class ChatDetailsViewModel @Inject constructor(
             Log.d("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
 
             try {
-                localSmsRepository.addTextMessage(textMessage)
+                chatDetailsRepository.addTextMessage(textMessage)
                 sendSms(context, textMessage)
                 _smsState.value = SmsState.Sent
                 Log.d("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")

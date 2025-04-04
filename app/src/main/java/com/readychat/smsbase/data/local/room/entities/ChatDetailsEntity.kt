@@ -28,11 +28,13 @@ data class ChatWithMessages(
 data class ChatDetailsEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val contactId: String = "",
     val address: String,
     val contact: String,
     val accountLogoColor: Int, // ARGB guardado
     val archivedChat: Boolean,
-    val updatedAt: Long
+    val updatedAt: Long,
+    var contactSaved: Boolean = true,
 )
 
 @Entity(
@@ -62,6 +64,7 @@ fun ChatWithMessages.toDomain(): ChatDetailsModel {
         contact = chat.contact,
         accountLogoColor = Color(chat.accountLogoColor),
         updatedAt = chat.updatedAt,
+        contactSaved = chat.contactSaved,
         archivedChat = chat.archivedChat,
         chatList = messages.map { it.toDomain() }.toMutableList()
     )
@@ -86,6 +89,7 @@ fun ChatDetailsEntity.toDomain(): ChatDetailsModel{
         accountLogoColor = Color(accountLogoColor),
         updatedAt = updatedAt,
         archivedChat = archivedChat,
+        contactSaved = contactSaved,
         chatList = emptyList<MessageModel>().toMutableList()
     )
 }

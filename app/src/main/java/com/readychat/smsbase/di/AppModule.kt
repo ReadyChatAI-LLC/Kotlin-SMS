@@ -6,10 +6,16 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.readychat.smsbase.data.local.contentResolver.SmsContentResolver
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
+import com.readychat.smsbase.data.local.repositories.ChatDetailsRepositoryImpl
+import com.readychat.smsbase.data.local.repositories.ChatSummaryRepositoryImpl
+import com.readychat.smsbase.data.local.repositories.ContactRepositoryImpl
 import com.readychat.smsbase.data.local.room.dao.ChatDetailsDao
 import com.readychat.smsbase.data.local.room.dao.ChatSummaryDao
 import com.readychat.smsbase.data.local.room.database.AppDatabase
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
+import com.readychat.smsbase.domain.repositories.IChatSummaryRepository
+import com.readychat.smsbase.domain.repositories.IContactRepository
+import com.readychat.smsbase.presentation.viewmodel.util.PermissionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -51,9 +57,43 @@ object AppModule {
         return appDatabase.chatDetailsDao()
     }
 
-    @Provides
+    /*@Provides
     @Singleton
     fun provideLocalSmsRepository(smsContentResolver: SmsContentResolver, chatSummaryDao: ChatSummaryDao, chatDetailsDao: ChatDetailsDao): LocalSmsRepository{
         return LocalSmsRepository(smsContentResolver, chatSummaryDao, chatDetailsDao)
+    }*/
+
+    @Provides
+    @Singleton
+    fun provideChatSummaryRepository(smsContentResolver: SmsContentResolver, chatSummaryDao: ChatSummaryDao): IChatSummaryRepository{
+        return ChatSummaryRepositoryImpl(
+            smsContentResolver = smsContentResolver,
+            chatSummaryDao = chatSummaryDao
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatDetailsRepository(smsContentResolver: SmsContentResolver, chatSummaryDao: ChatSummaryDao, chatDetailsDao: ChatDetailsDao): IChatDetailsRepository{
+        return ChatDetailsRepositoryImpl(
+            smsContentResolver = smsContentResolver,
+            chatSummaryDao = chatSummaryDao,
+            chatDetailsDao = chatDetailsDao
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideContactRepository(smsContentResolver: SmsContentResolver, chatDetailsDao: ChatDetailsDao): IContactRepository{
+        return ContactRepositoryImpl(
+            smsContentResolver = smsContentResolver,
+            chatDetailsDao = chatDetailsDao
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun providePermissionManager(@ApplicationContext context: Context): PermissionManager {
+        return PermissionManager(context)
     }
 }

@@ -14,11 +14,18 @@ import android.telephony.SmsMessage
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.readychat.smsbase.domain.models.TextMessageModel
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 private const val CHANNEL_ID = "sms_channel"
 private const val KEY_TEXT_REPLY = "key_text_reply"
 private const val NOTIFICATION_ID = 1
 
+@AndroidEntryPoint
 class SmsReceiver : BroadcastReceiver() {
 
     companion object {
@@ -28,6 +35,9 @@ class SmsReceiver : BroadcastReceiver() {
             smsListener = null
         }
     }
+
+    @Inject
+    lateinit var chatDetailsRepository: IChatDetailsRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("messentrante", "onReceive() llamado con acción: ${intent.action}")
@@ -51,7 +61,24 @@ class SmsReceiver : BroadcastReceiver() {
                     put(Telephony.Sms.DATE, timestamp)
                     put(Telephony.Sms.TYPE, Telephony.Sms.MESSAGE_TYPE_INBOX)
                 }
-                context.contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
+                try {
+                    val uri = context.contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
+                    Log.d("messentrante", "SMS guardado en la base de datos del dispositivo: $uri")
+
+                    val receivedSms = TextMessageModel(
+                        sender = sender,
+                        content = messageBody,
+                        timeStamp = timestamp,
+                        status = "0",
+                        type = "1"
+                    )
+                    CoroutineScope(Dispatchers.IO).launch {
+                        chatDetailsRepository.addTextMessage(receivedSms)
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("messentrante", "Error al guardar SMS en la base de datos del dispositivo: ${e.message}", e)
+                }
 
                 val receivedSms = TextMessageModel(
                     sender = sender,
@@ -96,7 +123,7 @@ class SmsReceiver : BroadcastReceiver() {
 
         val replyAction = NotificationCompat.Action.Builder(
             android.R.drawable.ic_dialog_email,
-            "Responder",
+            "Response",
             replyPendingIntent
         )
             .addRemoteInput(remoteInput)

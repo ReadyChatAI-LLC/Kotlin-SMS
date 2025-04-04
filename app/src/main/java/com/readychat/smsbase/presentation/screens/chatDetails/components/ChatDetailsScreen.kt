@@ -1,6 +1,7 @@
 package com.readychat.smsbase.presentation.screens.chatDetails.components
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -48,12 +49,12 @@ import com.readychat.smsbase.util.FormatDate
 @Composable
 fun ChatDetailsScreen(
     messageText: String,
-    messages: ChatDetailsModel,
+    chatDetails: ChatDetailsModel,
     onMessageTextChange: (String) -> Unit,
     onBack: () -> Unit,
     onNewMessageSent: (TextMessageModel) -> Unit,
     removeMessage: (Set<Int>) -> Unit,
-    onTopBarClick: () -> Unit
+    onProfileClick: () -> Unit
 ) {
 
     var selectedMessageIds by remember { mutableStateOf(setOf<Int>()) }
@@ -66,8 +67,10 @@ fun ChatDetailsScreen(
     Scaffold(topBar = {
         TopAppBar(
             title = {
-                TextButton(onClick = { onTopBarClick() }) {
-                    Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else messages.contact,
+                TextButton(onClick = {
+                    Log.i("prueba", "ChatDetailsSCreen en OnProfileClick, address es: ${chatDetails.address}")
+                    onProfileClick() }) {
+                    Text(if (isSelectionMode) "${selectedMessageIds.size} Selected" else chatDetails.contact,
                         fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
                 }
             },
@@ -108,7 +111,7 @@ fun ChatDetailsScreen(
         ) {
             MessagesList(
                 modifier = Modifier.weight(1f),
-                messages.chatList,
+                chatDetails.chatList,
                 selectedList = selectedMessageIds,
                 isSelectionMode = isSelectionMode,
                 onMessageSelected = {
@@ -131,7 +134,7 @@ fun ChatDetailsScreen(
 
                         onNewMessageSent(
                             TextMessageModel(
-                                sender = messages.address,
+                                sender = chatDetails.address,
                                 content = messageText.trim(),
                                 timeStamp = System.currentTimeMillis(),
                                 status = "0",
@@ -188,13 +191,12 @@ fun MessageBubble(
     val isFromMe = message.type.toInt() == 2
     val alignment = if (isFromMe) Alignment.CenterEnd else Alignment.CenterStart
     val bubbleColor =
-        if (isFromMe) Color(0xFF85929e) else MaterialTheme.colorScheme.surfaceContainerHigh
+        if (isFromMe) Color(0xFF85929e) else Color(0xFF054D67)
     val textColor = if (isFromMe) Color.Black else Color.White
     val textAlign = if (isFromMe) TextAlign.End else TextAlign.Start
     val boxColor = if (isSelected) Color(0xFFC9CBCB).copy(alpha = 0.3f) else Color.Transparent
 
     val messageId = message.messageId
-
 
     Box(
         modifier = Modifier

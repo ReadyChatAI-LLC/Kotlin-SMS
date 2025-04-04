@@ -7,8 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readychat.smsbase.data.local.SmsReceiver
 import com.readychat.smsbase.data.local.dataStore.SettingsDataStore
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
 import com.readychat.smsbase.domain.models.ChatSummaryModel
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
+import com.readychat.smsbase.domain.repositories.IChatSummaryRepository
+import com.readychat.smsbase.domain.repositories.IContactRepository
 import com.readychat.smsbase.presentation.screens.chatList.components.SmsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,7 +18,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
-    private val localSmsRepository: LocalSmsRepository,
+    private val localSmsRepository: IChatSummaryRepository,
+    private val contactRepository: IContactRepository,
+    private val chatDetailsRepository: IChatDetailsRepository,
     private val settingsDataStore: SettingsDataStore
 ): ViewModel() {
 
@@ -30,7 +34,7 @@ class ChatListViewModel @Inject constructor(
             settingsDataStore.appStartedFlow.collect{ value ->
                 if(!value){
                     localSmsRepository.loadChatSummariesToRoom()
-                    localSmsRepository.loadContactsToRoom()
+                    contactRepository.loadContactsToRoom()
 
                     settingsDataStore.setAppStarted(true)
                 }else{
@@ -43,7 +47,7 @@ class ChatListViewModel @Inject constructor(
         SmsReceiver.smsListener = { textMessage ->
             Log.i("prueba", "Mensaje recibido!!!: $textMessage")
             viewModelScope.launch {
-                localSmsRepository.addTextMessage(textMessage)
+                chatDetailsRepository.addTextMessage(textMessage)
             }
         }
     }
@@ -62,13 +66,13 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    fun deleteChat(chatsToBeDeleted: List<Int>, summaries: List<ChatSummaryModel>){
+    fun deleteChats(chatsToBeDeleted: List<Int>, summaries: List<ChatSummaryModel>){
         val addresses: List<String> = summaries.filter { it.id in chatsToBeDeleted }
             .map { it.address }
 
         viewModelScope.launch {
             try {
-                localSmsRepository.deleteChat(addresses)
+                chatDetailsRepository.deleteChats(addresses)
             }catch (e: Exception){
                 Log.e("prueba", "Fallo el eliminar chats: ${e.message}")
                 _uiState.value = SmsUiState.Error("Deletion Chats Failed: ${e.message}")

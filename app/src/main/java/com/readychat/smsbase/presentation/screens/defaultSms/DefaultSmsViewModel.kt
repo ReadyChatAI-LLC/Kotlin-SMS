@@ -32,13 +32,11 @@ class DefaultSmsViewModel @Inject constructor() : ViewModel() {
     }
 
     fun updateIsDefaultApp(isDefaultApp: Boolean){
-        Log.d("prueba", "Uptading IsDefaultApp: $isDefaultApp")
         _isDefaultApp.value = isDefaultApp
         checkIsEnabledToNavigate()
     }
 
     fun updateContactPermissionGranted(contactPermissionGranted: Boolean){
-        Log.d("prueba", "Uptading contactPermissionGranted: $contactPermissionGranted")
         _contactPermissionGranted.value = contactPermissionGranted
         checkIsEnabledToNavigate()
     }

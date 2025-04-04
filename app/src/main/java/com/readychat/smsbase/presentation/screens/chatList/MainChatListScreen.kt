@@ -31,7 +31,7 @@ fun MainChatListScreen(
             navigateToChat = { navigateToChatDetails(it) },
             navigateToStartChat = { navigateToStartChat() },
             navigateToSetDefaultScreen = { navigateToSetDefaultScreen() },
-            onDeletionChat = { viewModel.deleteChat(it.toList(), state.messages) },
+            onDeletionChat = { viewModel.deleteChats(it.toList(), state.messages) },
             onArchiveChat = { viewModel.archiveChats(it.toList()) },
             navigateToChatsArchived = { navigateToArchivedChats() })
 
