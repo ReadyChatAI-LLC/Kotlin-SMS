@@ -22,3 +22,6 @@ data class ChatProfileRoute(val phoneNumber: String)
 
 @Serializable
 object ArchivedChatsRoute
+
+@Serializable
+data class GroupChatRoute(val groupName: String, val members: List<String>)

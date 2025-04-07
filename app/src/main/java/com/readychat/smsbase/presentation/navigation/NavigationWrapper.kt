@@ -7,12 +7,8 @@ import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Transition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -28,15 +24,14 @@ import com.readychat.smsbase.presentation.screens.defaultSms.DefaultSmsScreen
 import com.readychat.smsbase.presentation.screens.settings.SettingsScreen
 import com.readychat.smsbase.presentation.screens.contacts.ContactsScreen
 
+import com.readychat.smsbase.presentation.screens.chatDetailsGroup.MainGroupChatScreen
+
 @Composable
 fun NavigationWrapper() {
-
     val navController = rememberNavController()
-
     Log.d("prueba", "NavigationWrapper Iniciada y ejecutando")
 
     val context = LocalContext.current
-
     val packageName = context.packageName
 
     val isDefaultSmsApp = Telephony.Sms.getDefaultSmsPackage(context) == packageName
@@ -49,50 +44,27 @@ fun NavigationWrapper() {
         if (isDefaultSmsApp && contactPermissionGranted) ChatListRoute else DefaultSmsRoute
 
     val slideEnterTransition: AnimatedContentTransitionScope<*>.() -> EnterTransition = {
-        slideIntoContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Start,
-            animationSpec = tween(200)
-        )
+        slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Start)
     }
 
     val slideExitTransition: AnimatedContentTransitionScope<*>.() -> ExitTransition = {
-        slideOutOfContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(100)
-        )
+        slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.End)
     }
 
     NavHost(
-        navController = navController, startDestination = startDestination,
-        enterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(200)
-            )
-        },
-        exitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(100)
-            )
-        },
+        navController = navController,
+        startDestination = startDestination,
+        enterTransition = slideEnterTransition,
+        exitTransition = slideExitTransition
     ) {
         composable<ChatListRoute> {
-            Log.d("prueba", "Navegando a ChatListScreen")
             MainChatListScreen(
                 navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
-                navigateToSettings = {
-                    navController.navigate(SettingsRoute)
-                },
-                navigateToStartChat = {
-                    navController.navigate(ContactsRoute)
-                },
-                navigateToSetDefaultScreen = {
-                    navController.navigate(DefaultSmsRoute)
-                },
-                navigateToArchivedChats = {
-                    navController.navigate(ArchivedChatsRoute)
-                })
+                navigateToSettings = { navController.navigate(SettingsRoute) },
+                navigateToStartChat = { navController.navigate(ContactsRoute) },
+                navigateToSetDefaultScreen = { navController.navigate(DefaultSmsRoute) },
+                navigateToArchivedChats = { navController.navigate(ArchivedChatsRoute) }
+            )
         }
 
         composable<ChatDetailsRoute>(
@@ -108,7 +80,8 @@ fun NavigationWrapper() {
                         launchSingleTop = true
                     }
                 },
-                onProfileClick = { address -> navController.navigate(ChatProfileRoute(address)) })
+                onProfileClick = { address -> navController.navigate(ChatProfileRoute(address)) }
+            )
         }
 
         composable<SettingsRoute>(
@@ -119,8 +92,8 @@ fun NavigationWrapper() {
         }
 
         composable<DefaultSmsRoute>(
-            enterTransition = { fadeIn(animationSpec = tween(200)) },
-            exitTransition = { fadeOut(animationSpec = tween(100)) }
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() }
         ) {
             DefaultSmsScreen(onSetDefaultApp = {
                 navController.navigate(ChatListRoute)
@@ -131,9 +104,15 @@ fun NavigationWrapper() {
             enterTransition = slideEnterTransition,
             exitTransition = slideExitTransition
         ) {
-            ContactsScreen(onContactClick = { phoneNumber ->
-                navController.navigate(ChatDetailsRoute(phoneNumber))
-            }, onBack = { navController.popBackStack() })
+            ContactsScreen(
+                onContactClick = { phoneNumber ->
+                    navController.navigate(ChatDetailsRoute(phoneNumber))
+                },
+                onBack = { navController.popBackStack() },
+                onCreateGroup = { groupName, memberAddresses ->
+                    navController.navigate(GroupChatRoute(groupName, memberAddresses))
+                }
+            )
         }
 
         composable<ChatProfileRoute>(
@@ -143,7 +122,8 @@ fun NavigationWrapper() {
             val phoneNumber: ChatDetailsRoute = backStackEntry.toRoute()
             MainChatProfileScreen(
                 address = phoneNumber.phoneNumber,
-                onBack = { navController.popBackStack() })
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable<ArchivedChatsRoute>(
@@ -152,6 +132,18 @@ fun NavigationWrapper() {
         ) {
             MainChatArchivedScreen(
                 navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<GroupChatRoute>(
+            enterTransition = slideEnterTransition,
+            exitTransition = slideExitTransition
+        ) { backStackEntry ->
+            val route: GroupChatRoute = backStackEntry.toRoute()
+            MainGroupChatScreen(
+                groupName = route.groupName,
+                members = route.members,
                 onBack = { navController.popBackStack() }
             )
         }
