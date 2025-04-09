@@ -26,7 +26,6 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
 
         setContent {
-
             Log.d("prueba", "SetContent inicializado")
 
             val navHostController = rememberNavController()

@@ -39,6 +39,7 @@ fun ChatSummaryItem(
     navigateToChat: (String) -> Unit
 ) {
 
+
     val boxColor =
         if (isSelected) MaterialTheme.colorScheme.outline.copy(alpha = 0.3f) else Color.Transparent
 

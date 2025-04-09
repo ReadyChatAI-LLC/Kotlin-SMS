@@ -23,7 +23,6 @@ import com.readychat.smsbase.presentation.screens.chatProfile.MainChatProfileScr
 import com.readychat.smsbase.presentation.screens.defaultSms.DefaultSmsScreen
 import com.readychat.smsbase.presentation.screens.settings.SettingsScreen
 import com.readychat.smsbase.presentation.screens.contacts.ContactsScreen
-
 import com.readychat.smsbase.presentation.screens.chatDetailsGroup.MainGroupChatScreen
 
 @Composable
@@ -60,6 +59,9 @@ fun NavigationWrapper() {
         composable<ChatListRoute> {
             MainChatListScreen(
                 navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
+                navigateToGroupChat = { groupName, members ->
+                    navController.navigate(GroupChatRoute(groupName, members))
+                },
                 navigateToSettings = { navController.navigate(SettingsRoute) },
                 navigateToStartChat = { navController.navigate(ContactsRoute) },
                 navigateToSetDefaultScreen = { navController.navigate(DefaultSmsRoute) },

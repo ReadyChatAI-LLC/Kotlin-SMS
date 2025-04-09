@@ -55,81 +55,83 @@ class LocalSmsRepository @Inject constructor(
         chatSummaryDao.insertChatSummaries(smsChats)
     }
 
-    suspend fun addTextMessage(textMessage: TextMessageModel) = withContext(Dispatchers.IO) {
-        Log.d("prueba", "Agregando nuevo mensaje: $textMessage")
-
-        chatDetailsDao.getChatIdByAddress(textMessage.sender)?.let {
-            chatDetailsDao.insertTextMessage(textMessage.toMessageEntity(it))
-
-            val chatSummary =
-                chatSummaryDao.getChatSummaryByAddress(textMessage.sender)?.let { obj ->
-                    obj.copy(
-                        content = textMessage.content,
-                        timeStamp = textMessage.timeStamp,
-                        status = textMessage.status,
-                        type = textMessage.type,
-                        updatedAt = textMessage.timeStamp,
-                        archivedChat = obj.archivedChat
-                    )
-                } ?: ChatSummaryEntity(
-                    address = textMessage.sender,
-                    content = textMessage.content,
-                    timeStamp = textMessage.timeStamp,
-                    status = textMessage.status,
-                    type = textMessage.type,
-                    contact = getContactByAddress(textMessage.sender),
-                    updatedAt = textMessage.timeStamp,
-                    archivedChat = false,
-                    accountLogoColor = Converters.fromColor(RandomColor.randomColor())
-                )
-
-            chatSummaryDao.insertChatSummary(chatSummary)
+    suspend fun ensureChatExists(address: String): Long {
+        val existingId = chatDetailsDao.getChatIdByAddress(address)
+        return existingId ?: chatDetailsDao.insertChat(
+            com.readychat.smsbase.data.local.room.entities.ChatDetailsEntity(
+                address = address,
+                contact = address,
+                accountLogoColor = 0xFFAAAAAA.toInt(),
+                archivedChat = false,
+                updatedAt = System.currentTimeMillis()
+            )
+        ).also {
+            Log.d("manupruebas", "Chat creado en chat_details con address: $address y id: $it")
         }
     }
 
-    suspend fun updateChatSummary(summaryEntity: ChatSummaryEntity) = withContext(Dispatchers.IO) {
-        chatSummaryDao.updateChatSummary(summaryEntity)
+    suspend fun addTextMessage(
+        textMessage: TextMessageModel,
+        customContactName: String? = null
+    ) = withContext(Dispatchers.IO) {
+
+        val chatId = ensureChatExists(textMessage.sender)
+
+        chatDetailsDao.insertTextMessage(textMessage.toMessageEntity(chatId))
+
+        val chatSummary = chatSummaryDao.getChatSummaryByAddress(textMessage.sender)?.let { obj ->
+            obj.copy(
+                content = textMessage.content,
+                timeStamp = textMessage.timeStamp,
+                status = textMessage.status,
+                type = textMessage.type,
+                updatedAt = textMessage.timeStamp,
+                archivedChat = obj.archivedChat
+            )
+        } ?: ChatSummaryEntity(
+            address = textMessage.sender,
+            content = textMessage.content,
+            timeStamp = textMessage.timeStamp,
+            status = textMessage.status,
+            type = textMessage.type,
+            contact = customContactName ?: getContactByAddress(textMessage.sender),
+            updatedAt = textMessage.timeStamp,
+            archivedChat = false,
+            accountLogoColor = Converters.fromColor(RandomColor.randomColor())
+        )
+
+        chatSummaryDao.insertChatSummary(chatSummary)
     }
+
 
     private fun mapChatWithMessagesToDomain(chatWithMessages: ChatWithMessages): ChatDetailsModel {
         return chatWithMessages.toDomain()
     }
 
     fun getChatDetails(longAddress: String): Flow<ChatDetailsModel> {
-        val address = PhoneNumberParser.phoneNumberParser(longAddress)
+        val address = longAddress
         return chatDetailsDao.getChatWithMessages(address)
             .map(::mapChatWithMessagesToDomain)
     }
 
     suspend fun isChatAddressSaved(longAddress: String): Boolean = withContext(Dispatchers.IO) {
-        Log.i("prueba", "Checking initial number: 1")
         chatDetailsDao.isChatAddressSaved(PhoneNumberParser.phoneNumberParser(longAddress))
     }
 
     suspend fun loadChatDetailsToRoom(address: String) = withContext(Dispatchers.IO) {
-        Log.i("prueba", "Checking initial number: 2")
-        Log.d("prueba", "0")
         val chatsDetails = smsContentResolver.getChatDetailsByNumber(address)
-        Log.d("prueba", "3")
 
         val chatId = chatDetailsDao.insertChat(chatsDetails.toMessageEntity())
-
-        Log.d("prueba", "4")
 
         val insertedChat =
             chatDetailsDao.insertMessages(chatsDetails.chatList.map { it.toMessageEntity(chatId) })
 
-        Log.d("prueba", "Resultado de importando detalles de un chat a Room: $insertedChat")
     }
 
     suspend fun getAllContactsName(): List<ChatDetailsModel> = withContext(Dispatchers.IO) {
         chatDetailsDao.getAllContacts().map { it.toDomain() }
     }
 
-    suspend fun searchContact(searchText: String): List<ChatDetailsModel> =
-        withContext(Dispatchers.IO) {
-            chatDetailsDao.searchContacts(searchText).map { it.toDomain() }
-        }
 
     suspend fun loadContactsToRoom() = withContext(Dispatchers.IO) {
         val contacts = smsContentResolver.getAllContacts()
