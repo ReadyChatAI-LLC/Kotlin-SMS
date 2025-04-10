@@ -25,10 +25,9 @@ fun MainGroupChatScreen(
 
 
 
-    LaunchedEffect(groupName, members) {
-
+    LaunchedEffect(Unit) {
         viewModel.setGroupInfo(groupName, members)
-        viewModel.loadGroupMessages() // 👈 Agrega esta línea
+        viewModel.loadGroupMessages()
     }
 
     when (val state = uiState) {

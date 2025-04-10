@@ -7,8 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readychat.smsbase.data.local.SmsReceiver
 import com.readychat.smsbase.data.local.dataStore.SettingsDataStore
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
 import com.readychat.smsbase.domain.models.ChatSummaryModel
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
+import com.readychat.smsbase.domain.repositories.IChatSummaryRepository
+import com.readychat.smsbase.domain.repositories.IContactRepository
 import com.readychat.smsbase.presentation.screens.chatList.components.SmsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,24 +18,24 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
-    private val localSmsRepository: LocalSmsRepository,
+    private val chatDetailsRepo: IChatDetailsRepository,
+    private val chatSummaryRepo: IChatSummaryRepository,
+    private val contactRepo: IContactRepository,
     private val settingsDataStore: SettingsDataStore
-): ViewModel() {
+) : ViewModel() {
 
     private val _uiState = mutableStateOf<SmsUiState>(SmsUiState.Loading)
     val uiState: State<SmsUiState> get() = _uiState
 
-    // REVISAR FUNCION INIT
-
     init {
         viewModelScope.launch {
-            settingsDataStore.appStartedFlow.collect{ value ->
-                if(!value){
-                    localSmsRepository.loadChatSummariesToRoom()
-                    localSmsRepository.loadContactsToRoom()
+            settingsDataStore.appStartedFlow.collect { value ->
+                if (!value) {
+                    chatSummaryRepo.loadChatSummariesToRoom()
+                    contactRepo.loadContactsToRoom()
 
                     settingsDataStore.setAppStarted(true)
-                }else{
+                } else {
                     Log.d("prueba", "App had already been initialized")
                 }
                 loadMessages()
@@ -43,7 +45,7 @@ class ChatListViewModel @Inject constructor(
         SmsReceiver.smsListener = { textMessage ->
             Log.i("prueba", "Mensaje recibido!!!: $textMessage")
             viewModelScope.launch {
-                localSmsRepository.addTextMessage(textMessage)
+                chatDetailsRepo.addTextMessage(textMessage)
             }
         }
     }
@@ -52,7 +54,7 @@ class ChatListViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("prueba", "Cargando mensajes de ROOM")
             try {
-                localSmsRepository.getChatSummaries().collect{ chatSummaries ->
+                chatSummaryRepo.getChatSummaries().collect { chatSummaries ->
                     _uiState.value = SmsUiState.Success(chatSummaries)
                 }
             } catch (e: Exception) {
@@ -62,25 +64,25 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    fun deleteChat(chatsToBeDeleted: List<Int>, summaries: List<ChatSummaryModel>){
+    fun deleteChat(chatsToBeDeleted: List<Int>, summaries: List<ChatSummaryModel>) {
         val addresses: List<String> = summaries.filter { it.id in chatsToBeDeleted }
             .map { it.address }
 
         viewModelScope.launch {
             try {
-                localSmsRepository.deleteChat(addresses)
-            }catch (e: Exception){
+                chatDetailsRepo.deleteChats(addresses)
+            } catch (e: Exception) {
                 Log.e("prueba", "Fallo el eliminar chats: ${e.message}")
                 _uiState.value = SmsUiState.Error("Deletion Chats Failed: ${e.message}")
             }
         }
     }
 
-    fun archiveChats(chatToBeArchived: List<Int>){
+    fun archiveChats(chatToBeArchived: List<Int>) {
         viewModelScope.launch {
             try {
-                localSmsRepository.updateArchivedChats(true, chatToBeArchived)
-            }catch (e: Exception){
+                chatSummaryRepo.updateArchivedChats(true, chatToBeArchived)
+            } catch (e: Exception) {
                 Log.e("prueba", "Fallo el archivar chat: ${e.message}")
                 _uiState.value = SmsUiState.Error("Archived Chats Failed: ${e.message}")
             }

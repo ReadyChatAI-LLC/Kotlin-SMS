@@ -24,7 +24,11 @@ fun MainChatArchivedScreen(viewModel: ChatArchivedViewModel = hiltViewModel(),
         is SmsUiState.Success -> ChatArchivedScreen(
             chatSummaries = state.messages,
             navigateToChat = { navigateToChatDetails(it) },
-            onDeletionChat = { viewModel.deleteChat(it.toList()) },
+            onDeletionChat = { selectedIds ->
+                val addressesToDelete = state.messages.filter { it.id in selectedIds }
+                    .map { it.address }
+                viewModel.deleteChat(addressesToDelete)
+            },
             onUnarchiveChat = { viewModel.unarchiveChats(it.toList()) },
             onBack = { onBack() })
 

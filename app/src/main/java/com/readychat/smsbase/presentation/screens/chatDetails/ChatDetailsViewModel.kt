@@ -89,7 +89,7 @@ class ChatDetailsViewModel @Inject constructor(
 
     private fun sendSms(context: Context, textMessage: TextMessageModel) {
         val intent = Intent(context, SmsSendService::class.java).apply {
-            putExtra("phoneNumber", textMessage.sender)
+            putExtra("phone", textMessage.sender)
             putExtra("message", textMessage.content)
         }
         context.startService(intent)

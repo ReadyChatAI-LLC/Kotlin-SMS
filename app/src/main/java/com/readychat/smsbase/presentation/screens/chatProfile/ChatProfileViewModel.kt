@@ -5,7 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
 import com.readychat.smsbase.presentation.screens.shared.ChatDetailsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -13,20 +13,21 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatProfileViewModel @Inject constructor(
-    private val localSmsRepository: LocalSmsRepository
-): ViewModel() {
+    private val chatDetailsRepo: IChatDetailsRepository
+) : ViewModel() {
+
     private val _address = mutableStateOf("")
     val address: State<String> get() = _address
 
     private val _uiState = mutableStateOf<ChatDetailsState>(ChatDetailsState.Loading)
     val uiState: State<ChatDetailsState> get() = _uiState
 
-    fun getChatMessages(){
+    fun getChatMessages() {
         viewModelScope.launch {
             try {
                 val chatAddress = address.value
 
-                localSmsRepository.getChatDetails(chatAddress).collect { chatDetails ->
+                chatDetailsRepo.getChatDetails(chatAddress).collect { chatDetails ->
                     _uiState.value = ChatDetailsState.Success(chatDetails)
                 }
             } catch (e: Exception) {
@@ -36,11 +37,17 @@ class ChatProfileViewModel @Inject constructor(
         }
     }
 
-    fun deleteConversation(){
-
+    fun deleteConversation() {
+        viewModelScope.launch {
+            try {
+                chatDetailsRepo.deleteChats(listOf(address.value))
+            } catch (e: Exception) {
+                Log.e("prueba", "Error al eliminar la conversación: ${e.message}")
+            }
+        }
     }
 
-    fun updateAddress(address: String){
+    fun updateAddress(address: String) {
         _address.value = address
     }
 }

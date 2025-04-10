@@ -9,19 +9,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readychat.smsbase.data.local.SmsSendService
-import com.readychat.smsbase.data.local.repositories.LocalSmsRepository
+import com.readychat.smsbase.domain.models.ChatDetailsModel
 import com.readychat.smsbase.domain.models.TextMessageModel
+import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
 import com.readychat.smsbase.presentation.screens.shared.ChatDetailsState
 import com.readychat.smsbase.presentation.screens.shared.SmsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import androidx.compose.ui.graphics.Color
 
 @HiltViewModel
 class GroupChatViewModel @Inject constructor(
-    private val repository: LocalSmsRepository
+    private val chatDetailsRepo: IChatDetailsRepository
 ) : ViewModel() {
 
     private var currentGroupName: String = ""
@@ -32,10 +35,10 @@ class GroupChatViewModel @Inject constructor(
 
     private val _uiState = mutableStateOf<ChatDetailsState>(
         ChatDetailsState.Success(
-            chatDetails = com.readychat.smsbase.domain.models.ChatDetailsModel(
+            chatDetails = ChatDetailsModel(
                 address = "",
                 contact = "",
-                accountLogoColor = androidx.compose.ui.graphics.Color.Gray,
+                accountLogoColor = Color.Gray,
                 updatedAt = System.currentTimeMillis(),
                 chatList = mutableListOf()
             )
@@ -49,6 +52,7 @@ class GroupChatViewModel @Inject constructor(
     fun setGroupInfo(groupName: String, recipients: List<String>) {
         currentGroupName = groupName
         currentRecipients = recipients
+        Log.d("manupruebas", "setGroupInfo ejecutado con $groupName y $recipients")
     }
 
     fun updateMessageText(messageText: String) {
@@ -73,9 +77,7 @@ class GroupChatViewModel @Inject constructor(
                     status = "0",
                     type = "2"
                 )
-
-
-                repository.addTextMessage(visualMessage, customContactName = currentGroupName)
+                chatDetailsRepo.addTextMessage(visualMessage, customContactName = currentGroupName)
 
                 currentRecipients.forEach { recipient ->
                     val intent = Intent(context, SmsSendService::class.java).apply {
@@ -96,26 +98,26 @@ class GroupChatViewModel @Inject constructor(
         }
     }
 
-
     private fun createGroupAddress(members: List<String>): String {
-        val address = members.sorted().joinToString(separator = "_")
-        return address
+        return members.sorted().joinToString(separator = "_")
     }
 
     fun loadGroupMessages() {
         viewModelScope.launch(Dispatchers.IO) {
             val address = createGroupAddress(currentRecipients)
+            Log.d("manupruebas", "loadGroupMessages ejecutado para address: $address")
 
             try {
-                repository.ensureChatExists(address)
+                chatDetailsRepo.createEmptyChatIfNotExists(address, currentGroupName)
 
-                repository.getChatDetails(address).collect { details ->
+                chatDetailsRepo.getChatDetails(address).collect { details ->
                     _uiState.value = ChatDetailsState.Success(details)
                 }
+
             } catch (e: Exception) {
+                Log.e("manupruebas", "Error al cargar mensajes del grupo: ${e.message}")
                 _uiState.value = ChatDetailsState.Error("No se pudieron cargar los mensajes del grupo")
             }
         }
     }
-
 }
