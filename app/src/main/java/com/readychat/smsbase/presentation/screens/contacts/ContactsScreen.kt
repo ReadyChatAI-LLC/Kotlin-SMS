@@ -1,6 +1,7 @@
 package com.readychat.smsbase.presentation.screens.contacts
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,9 +34,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.readychat.smsbase.domain.models.ChatDetailsModel
@@ -51,6 +59,20 @@ fun ContactsScreen(
     val contacts by viewModel.contacts
     val query by viewModel.query
     val focusRequester = remember { FocusRequester() }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val nestedScrollConnection = object : NestedScrollConnection {
+        override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
+            keyboardController?.hide()
+            return androidx.compose.ui.geometry.Offset.Zero
+        }
+
+        override suspend fun onPreFling(available: Velocity): Velocity {
+            keyboardController?.hide()
+            return super.onPreFling(available)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.getAllContacts()
@@ -77,6 +99,7 @@ fun ContactsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .nestedScroll(nestedScrollConnection)
         ) {
             OutlinedTextField(
                 value = query,
@@ -97,8 +120,8 @@ fun ContactsScreen(
                 contacts
             } else {
                 contacts.filter {
-                    it.contact.contains(query, ignoreCase = true) ||
-                            it.address.contains(query, ignoreCase = true)
+                    it.contact.replace(" ", "").contains(query.replace(" ", ""), ignoreCase = true) ||
+                            it.address.replace(" ", "").contains(query.replace(" ", ""), ignoreCase = true)
                 }
             }
 

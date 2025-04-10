@@ -41,6 +41,12 @@ interface ChatDetailsDao {
     @Query("SELECT * FROM chat_details WHERE address LIKE '%' || :query || '%' OR contact LIKE '%' || :query || '%'")
     suspend fun searchContacts(query: String): List<ChatDetailsEntity>
 
+    @Query("UPDATE chat_details SET isArchived = :archived WHERE address IN (:addresses)")
+    suspend fun updateArchivedChats(archived: Boolean, addresses: List<String>)
+
+    @Query("UPDATE chat_details SET isBlocked = :blocked WHERE address IN (:addresses)")
+    suspend fun updateBlockedChats(blocked: Boolean, addresses: List<String>): Int
+
     @Query("SELECT contact FROM chat_details WHERE address = :address")
     suspend fun getContactNameByAddress(address: String): String?
 

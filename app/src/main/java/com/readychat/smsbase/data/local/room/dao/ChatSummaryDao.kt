@@ -10,22 +10,21 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChatSummaryDao {
-    @Query("SELECT * FROM chat_summary WHERE archivedChat = 0 ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM chat_summary WHERE isArchived = 0 ORDER BY isPinned DESC, timeStamp DESC")
     fun getChatSummaries(): Flow<List<ChatSummaryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChatSummaries(summaries: List<ChatSummaryEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertChatSummary(summary: ChatSummaryEntity)
+    suspend fun insertChatSummary(summary: ChatSummaryEntity): Long
 
     @Query("""
         UPDATE chat_summary 
         SET content = :content, 
             timeStamp = :timeStamp, 
             status = :status, 
-            type = :type,
-            updatedAt = :updatedAt
+            type = :type
         WHERE address = :address
     """)
     suspend fun updateChatSummaryByAddress(
@@ -33,15 +32,20 @@ interface ChatSummaryDao {
         content: String,
         timeStamp: Long,
         status: String,
-        type: String,
-        updatedAt: Long
+        type: String
     )
 
-    @Query("SELECT * FROM chat_summary WHERE archivedChat = 1")
+    @Query("SELECT * FROM chat_summary WHERE isArchived = 1")
     fun getArchivedChatSummaries(): Flow<List<ChatSummaryEntity>>
 
-    @Query("UPDATE chat_summary SET archivedChat = :archived WHERE id IN (:ids)")
-    suspend fun updateArchivedChats(ids: List<Int>, archived: Boolean)
+    @Query("UPDATE chat_summary SET isArchived = :archived WHERE id IN (:ids)")
+    suspend fun updateArchivedChats(archived: Boolean, ids: List<Int>)
+
+    @Query("UPDATE chat_summary SET isPinned = :pinned WHERE id IN (:ids)")
+    suspend fun updatePinnedChats(pinned: Boolean, ids: List<Int>)
+
+    @Query("UPDATE chat_summary SET isBlocked = :blocked WHERE id IN (:ids)")
+    suspend fun updateBlockedChats(blocked: Boolean, ids: List<Int>)
 
     @Update
     suspend fun updateChatSummary(summary: ChatSummaryEntity)
@@ -54,6 +58,9 @@ interface ChatSummaryDao {
 
     @Query("SELECT * FROM chat_summary WHERE id = :id")
     suspend fun getChatSummaryById(id: Int): ChatSummaryEntity?
+
+    @Query("SELECT address FROM chat_summary WHERE id IN (:ids)")
+    suspend fun getAddressesByIds(ids: List<Int>): List<String>
 
     @Query("SELECT * FROM chat_summary WHERE address = :address")
     suspend fun getChatSummaryByAddress(address: String): ChatSummaryEntity?

@@ -32,7 +32,7 @@ class SmsSendService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val phoneNumber = intent?.getStringExtra("phone")
+        val phoneNumber = intent?.getStringExtra("phoneNumber")
         val message = intent?.getStringExtra("message")
         if (!phoneNumber.isNullOrEmpty() && !message.isNullOrEmpty()) {
             try {

@@ -83,14 +83,8 @@ fun NavigationWrapper(
             Log.d("prueba", "Navegando a ChatListScreen")
             MainChatListScreen(
                 navigateToChatDetails = { address -> navController.navigate(ChatDetailsRoute(address)) },
-                navigateToSettings = {
-                    navController.navigate(SettingsRoute)
-                },
                 navigateToStartChat = {
                     navController.navigate(ContactsRoute)
-                },
-                navigateToSetDefaultScreen = {
-                    navController.navigate(DefaultSmsRoute)
                 },
                 navigateToArchivedChats = {
                     navController.navigate(ArchivedChatsRoute)
@@ -107,13 +101,11 @@ fun NavigationWrapper(
                 onProfileClick = { address -> navController.navigate(ChatProfileRoute(address)) })
         }
 
-        composable<SettingsRoute> {
-            SettingsScreen { navController.popBackStack() }
-        }
-
         composable<DefaultSmsRoute> {
             DefaultSmsScreen(onSetDefaultApp = {
-                navController.navigate(ChatListRoute)
+                navController.navigate(ChatListRoute) {
+                    popUpTo(0) { inclusive = true }
+                }
             })
         }
 

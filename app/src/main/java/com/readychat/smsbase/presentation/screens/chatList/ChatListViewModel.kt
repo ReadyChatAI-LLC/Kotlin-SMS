@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readychat.smsbase.data.local.SmsReceiver
 import com.readychat.smsbase.data.local.dataStore.SettingsDataStore
-import com.readychat.smsbase.domain.models.ChatSummaryModel
 import com.readychat.smsbase.domain.repositories.IChatDetailsRepository
 import com.readychat.smsbase.domain.repositories.IChatSummaryRepository
 import com.readychat.smsbase.domain.repositories.IContactRepository
@@ -18,7 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
-    private val localSmsRepository: IChatSummaryRepository,
+    private val chatSummaryRepository: IChatSummaryRepository,
     private val contactRepository: IContactRepository,
     private val chatDetailsRepository: IChatDetailsRepository,
     private val settingsDataStore: SettingsDataStore
@@ -33,14 +32,14 @@ class ChatListViewModel @Inject constructor(
         viewModelScope.launch {
             settingsDataStore.appStartedFlow.collect{ value ->
                 if(!value){
-                    localSmsRepository.loadChatSummariesToRoom()
+                    chatSummaryRepository.loadChatSummariesToRoom()
                     contactRepository.loadContactsToRoom()
 
                     settingsDataStore.setAppStarted(true)
                 }else{
                     Log.d("prueba", "App had already been initialized")
                 }
-                loadMessages()
+                loadChats()
             }
         }
 
@@ -52,11 +51,11 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    private fun loadMessages() {
+    fun loadChats() {
         viewModelScope.launch {
             Log.d("prueba", "Cargando mensajes de ROOM")
             try {
-                localSmsRepository.getChatSummaries().collect{ chatSummaries ->
+                chatSummaryRepository.getChatSummaries().collect{ chatSummaries ->
                     _uiState.value = SmsUiState.Success(chatSummaries)
                 }
             } catch (e: Exception) {
@@ -66,13 +65,11 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    fun deleteChats(chatsToBeDeleted: List<Int>, summaries: List<ChatSummaryModel>){
-        val addresses: List<String> = summaries.filter { it.id in chatsToBeDeleted }
-            .map { it.address }
-
+    fun deleteChats(chatsToBeDeleted: List<Int>){
         viewModelScope.launch {
             try {
-                chatDetailsRepository.deleteChats(addresses)
+                Log.d("prueba", "Eliminando chats: $chatsToBeDeleted")
+                chatDetailsRepository.deleteChats(chatsToBeDeleted)
             }catch (e: Exception){
                 Log.e("prueba", "Fallo el eliminar chats: ${e.message}")
                 _uiState.value = SmsUiState.Error("Deletion Chats Failed: ${e.message}")
@@ -80,13 +77,38 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
+    fun pinChats(chatsToBePinned: List<Int>, toBePinned: Boolean){
+        viewModelScope.launch {
+            try {
+                Log.d("prueba", "Pineando chats: $chatsToBePinned")
+                chatSummaryRepository.updatePinnedChats(toBePinned, chatsToBePinned)
+            }catch (e: Exception){
+                Log.e("prueba", "Fallo el pinnear chat: ${e.message}")
+                _uiState.value = SmsUiState.Error("Pinned Chats Failed: ${e.message}")
+            }
+        }
+    }
+
     fun archiveChats(chatToBeArchived: List<Int>){
         viewModelScope.launch {
             try {
-                localSmsRepository.updateArchivedChats(true, chatToBeArchived)
+                Log.d("prueba", "Archivando chats: $chatToBeArchived")
+                chatSummaryRepository.updateArchivedChats(true, chatToBeArchived)
             }catch (e: Exception){
                 Log.e("prueba", "Fallo el archivar chat: ${e.message}")
                 _uiState.value = SmsUiState.Error("Archived Chats Failed: ${e.message}")
+            }
+        }
+    }
+
+    fun blockChats(chatToBeBlocked: List<Int>, toBeBlocked: Boolean){
+        viewModelScope.launch {
+            try {
+                Log.d("prueba", "Bloqueando chats: $chatToBeBlocked")
+                chatDetailsRepository.updateBlockedChats(toBeBlocked, chatToBeBlocked)
+            }catch (e: Exception){
+                Log.e("prueba", "Fallo el blockear chat: ${e.message}")
+                _uiState.value = SmsUiState.Error("Blocked Chats Failed: ${e.message}")
             }
         }
     }

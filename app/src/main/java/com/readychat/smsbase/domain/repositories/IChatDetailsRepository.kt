@@ -11,5 +11,7 @@ interface IChatDetailsRepository {
     suspend fun loadChatDetailsToRoom(address: String)
     suspend fun addTextMessage(textMessage: TextMessageModel)
     suspend fun removeMessages(messages: List<MessageModel>, addressOnChatSummaryChange: String?, newMessage: MessageModel?)
-    suspend fun deleteChats(chatsToBeDeleted: List<String>)
+    suspend fun updateArchivedChats(archivedChat: Boolean, id: List<Int> = emptyList(), address: String? = null)
+    suspend fun updateBlockedChats(blockedChat: Boolean, id: List<Int> = emptyList(), address: String? = null)
+    suspend fun deleteChats(ids: List<Int> = emptyList(), address: String? = null)
 }

@@ -11,7 +11,6 @@ import com.readychat.smsbase.domain.models.ChatDetailsModel
 import com.readychat.smsbase.domain.models.ChatSummaryModel
 import com.readychat.smsbase.domain.models.MessageModel
 import com.readychat.smsbase.util.Converters
-import com.readychat.smsbase.util.NumberAndCountryCodeObj
 import com.readychat.smsbase.util.PhoneNumberParser
 import com.readychat.smsbase.util.RandomColor
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -74,7 +73,10 @@ class SmsContentResolver @Inject constructor(
         return withContext(Dispatchers.IO) {
             // El numero no es reconocido con el codigo de pais (+1 por ejm)
             val address = PhoneNumberParser.getCleanPhoneNumber(longAddress)
-            Log.d("prueba", "Buscando mensajes de $longAddress -> ${address.number}. getChatDetailsByNumber de SmsContentResolver")
+            Log.d(
+                "prueba",
+                "Buscando mensajes de $longAddress -> ${address.number}. getChatDetailsByNumber de SmsContentResolver"
+            )
             val list = querySmsChats(
                 selection = "${Telephony.Sms.ADDRESS} = ?",
                 selectionArgs = arrayOf(address.number),
@@ -88,11 +90,11 @@ class SmsContentResolver @Inject constructor(
 
             ChatDetailsModel(
                 address = longAddress,
-                contact = contactName?: longAddress,
+                contact = contactName ?: longAddress,
                 accountLogoColor = RandomColor.randomColor(),
                 updatedAt = System.currentTimeMillis(),
                 contactSaved = contactSaved,
-                archivedChat = false,
+                isArchived = false,
                 chatList = sortedSmsChats.toMutableList()
             )
         }
@@ -137,14 +139,16 @@ class SmsContentResolver @Inject constructor(
 
                 if (isFetchingSummaryChats) {
 
-                    val cleanPhoneNumber = PhoneNumberParser.getCleanPhoneNumber(cursor.getString(addressIndex))
+                    val cleanPhoneNumber =
+                        PhoneNumberParser.getCleanPhoneNumber(cursor.getString(addressIndex))
 
                     if (!contactsCache.contains(cleanPhoneNumber.number)) {
                         contactsCache.add(address)
 
-                        val finalAddress = "${cleanPhoneNumber.countryCode ?: ""}${cleanPhoneNumber.number}"
+                        val finalAddress =
+                            "${cleanPhoneNumber.countryCode ?: ""}${cleanPhoneNumber.number}"
 
-                        chatSummaries.add(
+                       chatSummaries.add(
                             ChatSummaryModel(
                                 id = 0,
                                 address = finalAddress.ifBlank { "Unknown" },
@@ -152,9 +156,10 @@ class SmsContentResolver @Inject constructor(
                                 timeStamp = date.toLong(),
                                 status = status,
                                 type = type,
-                                contact = if(finalAddress.isBlank()) "Unknown" else getContactName(address)?: finalAddress,
-                                updatedAt = date.toLong(),
-                                archivedChat = false,
+                                contactName = if (finalAddress.isBlank()) "Unknown" else getContactName(
+                                    address
+                                ) ?: finalAddress,
+                                isArchived = false,
                                 accountLogoColor = RandomColor.randomColor()
                             )
                         )
@@ -207,7 +212,7 @@ class SmsContentResolver @Inject constructor(
                         address = PhoneNumberParser.normalizePhoneNumber(address).trim(),
                         contact = contact,
                         accountLogoColor = Converters.fromColor(RandomColor.randomColor()),
-                        archivedChat = false,
+                        isArchived = false,
                         updatedAt = System.currentTimeMillis()
                     )
                 }

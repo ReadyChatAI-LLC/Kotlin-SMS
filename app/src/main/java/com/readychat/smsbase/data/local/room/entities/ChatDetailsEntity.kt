@@ -1,5 +1,6 @@
 package com.readychat.smsbase.data.local.room.entities
 
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -32,7 +33,9 @@ data class ChatDetailsEntity(
     val address: String,
     val contact: String,
     val accountLogoColor: Int, // ARGB guardado
-    val archivedChat: Boolean,
+    val isArchived: Boolean,
+    val isPinned: Boolean = false,
+    val isBlocked: Boolean = false,
     val updatedAt: Long,
     var contactSaved: Boolean = true,
 )
@@ -58,16 +61,23 @@ data class MessageEntity(
 )
 
 fun ChatWithMessages.toDomain(): ChatDetailsModel {
-    return ChatDetailsModel(
-        id = chat.id,
-        address = chat.address,
-        contact = chat.contact,
-        accountLogoColor = Color(chat.accountLogoColor),
-        updatedAt = chat.updatedAt,
-        contactSaved = chat.contactSaved,
-        archivedChat = chat.archivedChat,
-        chatList = messages.map { it.toDomain() }.toMutableList()
-    )
+    return try {
+        ChatDetailsModel(
+            id = chat.id,
+            address = chat.address,
+            contact = chat.contact,
+            accountLogoColor = Color(chat.accountLogoColor),
+            updatedAt = chat.updatedAt,
+            contactSaved = chat.contactSaved,
+            isArchived = chat.isArchived,
+            isPinned = chat.isPinned,
+            isBlocked = chat.isBlocked,
+            chatList = messages.map { it.toDomain() }.toMutableList()
+        )
+    } catch (e: Exception) {
+        Log.e("prueba", "ChatDetailsEntity -> Error mapping ChatWithMessages to domain: ${e.message}")
+        throw e
+    }
 }
 
 fun MessageEntity.toDomain(): MessageModel {
@@ -88,7 +98,9 @@ fun ChatDetailsEntity.toDomain(): ChatDetailsModel{
         contact = contact,
         accountLogoColor = Color(accountLogoColor),
         updatedAt = updatedAt,
-        archivedChat = archivedChat,
+        isArchived = isArchived,
+        isPinned = isPinned,
+        isBlocked = isBlocked,
         contactSaved = contactSaved,
         chatList = emptyList<MessageModel>().toMutableList()
     )

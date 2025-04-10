@@ -1,7 +1,10 @@
 package com.readychat.smsbase.presentation.screens.chatList.chatArchived
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.readychat.smsbase.presentation.screens.chatList.chatArchived.components.ChatArchivedScreen
 import com.readychat.smsbase.presentation.screens.chatList.components.SmsUiState
@@ -14,7 +17,12 @@ fun MainChatArchivedScreen(viewModel: ChatArchivedViewModel = hiltViewModel(),
      onBack: () -> Unit
 ) {
 
+    val context = LocalContext.current
     val uiState by viewModel.uiState
+
+    LaunchedEffect(Unit) {
+        viewModel.loadArchivedChats()
+    }
 
     when (val state = uiState) {
         is SmsUiState.Loading -> {
@@ -28,6 +36,11 @@ fun MainChatArchivedScreen(viewModel: ChatArchivedViewModel = hiltViewModel(),
             onUnarchiveChat = { viewModel.unarchiveChats(it.toList()) },
             onBack = { onBack() })
 
-        is SmsUiState.Error -> ErrorScreen(errorMessage = state.message, onRetry = {}, onBack = {})
+        is SmsUiState.Error -> {
+            Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            ErrorScreen(errorMessage = state.message, onRetry = {}, onBack = {
+                viewModel.loadArchivedChats()
+            })
+        }
     }
 }

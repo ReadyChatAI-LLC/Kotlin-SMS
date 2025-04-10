@@ -27,34 +27,37 @@ object PhoneNumberParser {
     }
 
     fun getPhoneNumberInfo(phoneNumber: String): PhoneNumberInfo {
-        val phoneUtil = PhoneNumberUtil.getInstance()
-        Log.d("prueba", "PhoneNumber to be paser: $phoneNumber")
-        var phoneNumberProto: Phonenumber.PhoneNumber
-        return try {
-            Log.d("prueba", "0")
-            phoneNumberProto = phoneUtil.parse(phoneNumber, null)
-            Log.d("prueba", "1")
-            val country = phoneUtil.getRegionCodeForNumber(phoneNumberProto)
-            val internationalFormat = phoneUtil.format(phoneNumberProto, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)
-            Log.d("prueba", "2")
-            val regionCode = phoneUtil.getRegionCodeForNumber(phoneNumberProto)
-            Log.d("prueba", "3")
-            val countryCode = phoneNumberProto.countryCode
-            val nationalNumber = phoneNumberProto.nationalNumber
+        if (phoneNumber.any { it.isDigit() }) {
+            Log.w("PhoneNumberParser", "Input contains letters. Returning as Unknown.")
+            return PhoneNumberInfo(phoneNumber, "Unknown")
+        }
 
-            Log.d("prueba", "Pais: $country")
-            Log.d("prueba", "Region code:: $regionCode")
-            Log.d("prueba", "international number: $internationalFormat")
+        val phoneUtil = PhoneNumberUtil.getInstance()
+        Log.d("PhoneNumberParser", "PhoneNumber to be parsed: $phoneNumber")
+
+        return try {
+            val phoneNumberProto = phoneUtil.parse(phoneNumber, null)
+            val internationalFormat = phoneUtil.format(phoneNumberProto, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)
+            val regionCode = phoneUtil.getRegionCodeForNumber(phoneNumberProto)
+
+            Log.d("PhoneNumberParser", "Region code: $regionCode, International format: $internationalFormat")
 
             PhoneNumberInfo(internationalFormat, regionCode)
         } catch (e: Exception) {
-            phoneNumberProto = phoneUtil.parse(phoneNumber, "CO")
-            val internationalFormat = phoneUtil.format(phoneNumberProto, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)
-            Log.e("prueba", "Error: ${e.message}. But phonenumber formated: $internationalFormat")
-            e.printStackTrace()
-            PhoneNumberInfo(internationalFormat, "CO")
+            // Intentamos con un país por defecto, en este caso Colombia ("CO")
+            return try {
+                val fallbackProto = phoneUtil.parse(phoneNumber, "CO")
+                val fallbackFormat = phoneUtil.format(fallbackProto, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)
+
+                Log.e("PhoneNumberParser", "Fallback success with CO. Formatted: $fallbackFormat")
+                PhoneNumberInfo(fallbackFormat, "Unknown")
+            } catch (fallbackEx: Exception) {
+                Log.e("PhoneNumberParser", "Fallback failed too: ${fallbackEx.message}")
+                PhoneNumberInfo(phoneNumber, "Unknown")
+            }
         }
     }
+
 
     fun getCleanPhoneNumber(input: String): NumberAndCountryCodeObj {
         val trimmed = input.trim()

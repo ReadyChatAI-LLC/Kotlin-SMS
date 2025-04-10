@@ -40,9 +40,9 @@ class SmsReceiver : BroadcastReceiver() {
     lateinit var chatDetailsRepository: IChatDetailsRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d("messentrante", "onReceive() llamado con acción: ${intent.action}")
+        Log.d("prueba", "onReceive() llamado con acción: ${intent.action}")
 
-        Log.d("messentrante", "el dispositvo ha recibido un sms")
+        Log.d("prueba", "el dispositvo ha recibido un sms")
         val bundle = intent.extras
         if (bundle != null) {
             val pdus = bundle["pdus"] as? Array<*>
@@ -52,7 +52,7 @@ class SmsReceiver : BroadcastReceiver() {
                 val messageBody = sms.messageBody
                 val timestamp = sms.timestampMillis
 
-                Log.d("messentrante", "SMS de $sender: $messageBody")
+                Log.d("prueba", "SMS de $sender: $messageBody")
                 showNotification(context!!, sender, messageBody)
 
                 val values = ContentValues().apply {
@@ -63,7 +63,7 @@ class SmsReceiver : BroadcastReceiver() {
                 }
                 try {
                     val uri = context.contentResolver.insert(Telephony.Sms.CONTENT_URI, values)
-                    Log.d("messentrante", "SMS guardado en la base de datos del dispositivo: $uri")
+                    Log.d("prueba", "SMS guardado en la base de datos del dispositivo: $uri")
 
                     val receivedSms = TextMessageModel(
                         sender = sender,
@@ -77,7 +77,11 @@ class SmsReceiver : BroadcastReceiver() {
                     }
 
                 } catch (e: Exception) {
-                    Log.e("messentrante", "Error al guardar SMS en la base de datos del dispositivo: ${e.message}", e)
+                    Log.e(
+                        "prueba",
+                        "Error al guardar SMS en la base de datos del dispositivo: ${e.message}",
+                        e
+                    )
                 }
 
                 val receivedSms = TextMessageModel(
@@ -88,7 +92,7 @@ class SmsReceiver : BroadcastReceiver() {
                     type = "1"
                 )
 
-                Log.d("messentrante", "SMS de $sender: $receivedSms")
+                Log.d("prueba", "SMS de $sender: $receivedSms")
                 smsListener?.invoke(receivedSms)
             }
         }
@@ -98,14 +102,12 @@ class SmsReceiver : BroadcastReceiver() {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Mensajes SMS",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Mensajes SMS",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        notificationManager.createNotificationChannel(channel)
 
         val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
             .setLabel("Escribe tu respuesta...")

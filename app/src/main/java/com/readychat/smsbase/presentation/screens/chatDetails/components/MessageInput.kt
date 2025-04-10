@@ -1,12 +1,15 @@
 package com.readychat.smsbase.presentation.screens.chatDetails.components
 
 import android.net.Uri
-import android.os.Environment
+import android.util.Log
+import android.view.ContextThemeWrapper
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,100 +44,90 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
+import androidx.emoji2.emojipicker.EmojiPickerView
 import coil.compose.rememberAsyncImagePainter
+import com.readychat.smsbase.R
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun MessageInput(
     messageText: String,
+    showEmojiPicker: Boolean,
+    updateShowEmojiPicker: (Boolean) -> Unit,
     onMessageChange: (String) -> Unit,
-    onSendMessage: (Uri?) -> Unit,
-    onEmojiClicked: () -> Unit,
+    onSendMessage: () -> Unit,
     selectedImageUri: Uri? = null,
-    onImageSelected: (Uri) -> Unit,
+    onSelectImageUri: (Uri) -> Unit,
     onDeleteImage: () -> Unit
 ) {
     val context = LocalContext.current
     var showImageOptions by remember { mutableStateOf(false) }
     var tempUri by remember { mutableStateOf<Uri?>(null) }
 
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(messageText, TextRange(messageText.length))) }
+
+    LaunchedEffect(messageText) {
+        if (messageText != textFieldValue.text) {
+            textFieldValue = TextFieldValue(
+                messageText,
+                TextRange(messageText.length)
+            )
+        }
+    }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            tempUri?.let { onImageSelected(it) }
+            tempUri?.let { onSelectImageUri(it) }
         }
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { onImageSelected(it) }
+        uri?.let { onSelectImageUri(it) }
     }
 
-    fun createImageUri(): Uri {
-        val imageFile = File(
-            context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-            "camera_photo_${System.currentTimeMillis()}.jpg"
-        )
-        return FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            imageFile
+    fun createTempImageFile(): File {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val imageFileName = "JPEG_${timeStamp}_"
+        val storageDir = context.getExternalFilesDir("Pictures")
+        return File.createTempFile(
+            imageFileName,
+            ".jpg",
+            storageDir
         )
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         if (selectedImageUri != null) {
-            Box(
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .height(100.dp)
-                    .width(100.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = "Selected image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                IconButton(
-                    onClick = onDeleteImage,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .size(26.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                            shape = CircleShape
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Delete image",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-            }
+            SelectedImagePreview(selectedImageUri =  selectedImageUri, onDeleteImage = onDeleteImage)
         }
 
         Row(
             modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 7.dp)
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
@@ -144,7 +138,7 @@ fun MessageInput(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
                     shape = RoundedCornerShape(28.dp)
                 )
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 8.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box {
@@ -167,7 +161,12 @@ fun MessageInput(
                     DropdownMenuItem(
                         text = { Text("Tomar foto") },
                         onClick = {
-                            tempUri = createImageUri()
+                            val file = createTempImageFile()
+                            tempUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.provider",
+                                file
+                            )
                             cameraLauncher.launch(tempUri!!)
                             showImageOptions = false
                         },
@@ -195,11 +194,12 @@ fun MessageInput(
             }
 
             BasicTextField(
-                value = messageText,
-                onValueChange = { onMessageChange(it) },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 8.dp),
+                value = textFieldValue,
+                onValueChange = { newValue ->
+                    textFieldValue = newValue
+                    onMessageChange(newValue.text)
+                },
+                modifier = Modifier.weight(1f),
                 textStyle = TextStyle(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp
@@ -207,7 +207,7 @@ fun MessageInput(
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->
                     Box {
-                        if (messageText.isEmpty()) {
+                        if (textFieldValue.text.isEmpty()) {
                             Text(
                                 text = "Text message",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -221,7 +221,14 @@ fun MessageInput(
             )
 
             IconButton(
-                onClick = onEmojiClicked,
+                onClick = {
+                    val newEmojiPickerState = !showEmojiPicker
+                    updateShowEmojiPicker(newEmojiPickerState)
+
+                    if (newEmojiPickerState) {
+                        keyboardController?.hide()
+                    }
+                },
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
@@ -233,8 +240,9 @@ fun MessageInput(
 
             IconButton(
                 onClick = {
-                    if (messageText.trim().isNotEmpty() || selectedImageUri != null) {
-                        onSendMessage(selectedImageUri)
+                    if (textFieldValue.text.trim().isNotEmpty() || selectedImageUri != null) {
+                        onSendMessage()
+                        textFieldValue = TextFieldValue("")
                         onMessageChange("")
                     }
                 },
@@ -243,11 +251,52 @@ fun MessageInput(
                 Icon(
                     imageVector = Icons.Filled.Send,
                     contentDescription = "Send message",
-                    tint = if (messageText.trim().isNotEmpty() || selectedImageUri != null)
+                    tint = if (textFieldValue.text.trim().isNotEmpty() || selectedImageUri != null)
                         MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
+
+        AnimatedVisibility(
+            visible = showEmojiPicker,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            EmojiPickerView(
+                onEmojiSelected = { emoji ->
+                    val cursorPosition = textFieldValue.selection.start
+                    val newText = textFieldValue.text.substring(0, cursorPosition) + emoji +
+                            textFieldValue.text.substring(cursorPosition)
+
+                    val newCursorPosition = cursorPosition + emoji.length
+                    textFieldValue = TextFieldValue(
+                        text = newText,
+                        selection = TextRange(newCursorPosition)
+                    )
+
+                    onMessageChange(newText)
+                    Log.d("prueba", "Emoji inserted at pos $cursorPosition: $emoji, New text: $newText")
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun EmojiPickerView(
+    modifier: Modifier = Modifier,
+    onEmojiSelected: (String) -> Unit
+) {
+    AndroidView(
+        modifier = modifier.height(250.dp),
+        factory = { ctx ->
+            val emojiView = EmojiPickerView(ctx).apply {
+                setOnEmojiPickedListener { emojiViewItem ->
+                    Log.d("prueba", "Emoji Seleccionado: ${emojiViewItem.emoji}")
+                    onEmojiSelected(emojiViewItem.emoji)
+                }
+            }
+            emojiView
+        }
+    )
 }

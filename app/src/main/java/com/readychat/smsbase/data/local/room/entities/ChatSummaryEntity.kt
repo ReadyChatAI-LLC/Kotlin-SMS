@@ -18,9 +18,10 @@ data class ChatSummaryEntity(
     val timeStamp: Long,
     var status: String,
     val type: String,
-    val contact: String,
-    val updatedAt: Long,
-    val archivedChat: Boolean,
+    val contactName: String,
+    val isArchived: Boolean,
+    val isPinned: Boolean = false,
+    val isBlocked: Boolean = false,
     val accountLogoColor: Int
 )
 
@@ -32,9 +33,10 @@ fun ChatSummaryEntity.toDomain(): ChatSummaryModel {
         timeStamp = this.timeStamp,
         status = this.status,
         type = this.type,
-        contact = this.contact,
-        updatedAt = this.updatedAt,
-        archivedChat = this.archivedChat,
+        contactName = this.contactName,
+        isArchived = this.isArchived,
+        isPinned = this.isPinned,
+        isBlocked = this.isBlocked,
         accountLogoColor = Converters.toColor(this.accountLogoColor)
     )
 }

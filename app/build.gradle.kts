@@ -105,6 +105,11 @@ dependencies {
     // Coil (image handler)
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // Emoji Picker
+    implementation("androidx.emoji2:emoji2:1.5.0")
+    implementation("androidx.emoji2:emoji2-views:1.4.0")
+    implementation("androidx.emoji2:emoji2-emojipicker:1.5.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

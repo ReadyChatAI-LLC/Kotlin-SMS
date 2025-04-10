@@ -237,41 +237,4 @@ class MmsReceiver : BroadcastReceiver() {
             null
         }
     }
-
-    private fun showNotification(context: Context, mmsMessage: MmsMessageModel) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        val channel = NotificationChannel(
-                CHANNEL_ID,
-                "MMS Notifications",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            notificationManager.createNotificationChannel(channel)
-
-        val replyIntent = Intent(context, SmsReplyReceiver::class.java)
-        val replyPendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            replyIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY)
-            .setLabel("Responder")
-            .build()
-
-        val action = NotificationCompat.Action.Builder(0, "Responder", replyPendingIntent)
-            .addRemoteInput(remoteInput)
-            .build()
-
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_email)
-            .setContentTitle("Nuevo MMS")
-            .setContentText(mmsMessage.subject ?: "MMS sin asunto")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .addAction(action)
-            .build()
-
-        notificationManager.notify(NOTIFICATION_ID, notification)
-    }
 }

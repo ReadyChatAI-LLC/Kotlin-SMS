@@ -11,7 +11,9 @@ data class ChatDetailsModel(
     var address: String,
     var contact: String,
     var accountLogoColor: Color,
-    var archivedChat: Boolean = false,
+    var isArchived: Boolean = false,
+    val isPinned: Boolean = false,
+    val isBlocked: Boolean = false,
     var updatedAt: Long,
     var contactSaved: Boolean,
     var chatList: MutableList<MessageModel>,
@@ -33,7 +35,9 @@ fun ChatDetailsModel.toMessageEntity(): ChatDetailsEntity {
         address = address,
         contact = contact,
         accountLogoColor = accountLogoColor.toArgb(),
-        archivedChat = archivedChat,
+        isArchived = this.isArchived,
+        isBlocked = isBlocked,
+        isPinned = isPinned,
         contactSaved = contactSaved,
         updatedAt = updatedAt
     )

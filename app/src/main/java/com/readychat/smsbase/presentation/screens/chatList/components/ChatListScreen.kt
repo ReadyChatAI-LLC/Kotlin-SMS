@@ -1,14 +1,11 @@
 package com.readychat.smsbase.presentation.screens.chatList.components
 
-import android.app.role.RoleManager
-import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,9 +14,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Message
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +31,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,16 +40,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.readychat.smsbase.domain.models.ChatSummaryModel
+import com.readychat.smsbase.presentation.screens.shared.ConfirmOperationDialog
+import com.readychat.smsbase.presentation.screens.shared.ConfirmationModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatList(
+fun ChatListScreen(
     chatSummaries: List<ChatSummaryModel>,
-    navigateToSettings: () -> Unit,
     navigateToChat: (String) -> Unit,
     navigateToStartChat: () -> Unit,
-    navigateToSetDefaultScreen: () -> Unit,
     onDeletionChat: (Set<Int>) -> Unit,
+    onPinChat: (Set<Int>, Boolean) -> Unit,
+    onBlockChat: (Set<Int>, Boolean) -> Unit,
     onArchiveChat: (Set<Int>) -> Unit,
     navigateToChatsArchived: () -> Unit
 ) {
@@ -61,25 +60,23 @@ fun ChatList(
 
     var selectedChatIds by remember { mutableStateOf(setOf<Int>()) }
     val isSelectionMode = selectedChatIds.isNotEmpty()
-    var showDialogToConfirmDeletion by remember { mutableStateOf(false) }
-
-    if (showDialogToConfirmDeletion) {
-        ConfirmDeletionDialog(
-            onConfirm = {
-                onDeletionChat(selectedChatIds)
-                showDialogToConfirmDeletion = false
-                selectedChatIds = emptySet()
-            },
-            onDismiss = { showDialogToConfirmDeletion = false })
+    var showDialogToConfirmOperation by remember { mutableStateOf(false) }
+    var confirmationModel by remember {
+        mutableStateOf<ConfirmationModel?>(
+            null
+        )
     }
 
-    LaunchedEffect(Unit) {
-        val roleManager = context.getSystemService(Context.ROLE_SERVICE) as RoleManager
-        val isDefaultSmsApp = roleManager.isRoleHeld(RoleManager.ROLE_SMS)
-
-        if (isDefaultSmsApp) {
-            Log.e("prueba", "Volviendo a DefaultSmsScreen.")
-            //navigateToSetDefaultScreen()
+    if (showDialogToConfirmOperation) {
+        confirmationModel?.let { it ->
+            ConfirmOperationDialog(it)
+        } ?: run {
+            Toast.makeText(context, "No action was taken", Toast.LENGTH_SHORT).show()
+            showDialogToConfirmOperation = false
+            Log.e(
+                "prueba",
+                "ChatListScreen. Se inicializo un objeto vacio que no debio inicializarse."
+            )
         }
     }
 
@@ -93,6 +90,18 @@ fun ChatList(
                 ),
                 actions = {
                     if (isSelectionMode) {
+                        val selectedChats = chatSummaries.filter { it.id in selectedChatIds }
+                        val chatsArePinned = selectedChats.all { it.isPinned }
+                        IconButton(onClick = {
+                            onPinChat(selectedChatIds, !chatsArePinned)
+                            selectedChatIds = emptySet()
+                        }) {
+                            Icon(
+                                Icons.Default.PushPin,
+                                contentDescription = "Pin chat",
+                                modifier = Modifier.size(27.dp)
+                            )
+                        }
                         IconButton(onClick = {
                             onArchiveChat(selectedChatIds)
                             selectedChatIds = emptySet()
@@ -104,7 +113,20 @@ fun ChatList(
                             )
                         }
                         IconButton(onClick = {
-                            showDialogToConfirmDeletion = true
+                            confirmationModel = ConfirmationModel(
+                                title = "Delete Chats",
+                                description = "Are you sure you want to delete the selected chats?",
+                                onConfirm = {
+                                    showDialogToConfirmOperation = false
+                                    onDeletionChat(selectedChatIds)
+                                    selectedChatIds = emptySet()
+                                },
+                                onDismiss = {
+                                    showDialogToConfirmOperation = false
+                                    selectedChatIds = emptySet()
+                                }
+                            )
+                            showDialogToConfirmOperation = true
                         }) {
                             Icon(
                                 Icons.Default.DeleteOutline,
@@ -112,11 +134,30 @@ fun ChatList(
                                 modifier = Modifier.size(27.dp)
                             )
                         }
-                    } else {
-                        IconButton(onClick = { navigateToSettings() }) {
+                        IconButton(onClick = {
+                            val selectedChats = chatSummaries.filter { it.id in selectedChatIds }
+                            Log.d("prueba", "Chats seleccionados para bloquear: $selectedChats")
+                            val chatsAreBlocked = selectedChats.all { it.isBlocked }
+                            Log.d("prueba", "Chats seleccionados estan bloqueados?: $chatsAreBlocked")
+                            confirmationModel = ConfirmationModel(
+                                title = "Block Chats",
+                                description = "Are you sure you want to ${if(chatsAreBlocked) "unblock" else "block"} the selected chats?",
+                                onConfirm = {
+                                    onBlockChat(selectedChatIds, !chatsAreBlocked)
+                                    showDialogToConfirmOperation = false
+                                    selectedChatIds = emptySet()
+                                },
+                                onDismiss = {
+                                    showDialogToConfirmOperation = false
+                                    selectedChatIds = emptySet()
+                                }
+                            )
+                            showDialogToConfirmOperation = true
+                        }) {
                             Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings"
+                                Icons.Default.Block,
+                                contentDescription = "Block chat",
+                                modifier = Modifier.size(27.dp)
                             )
                         }
                     }
@@ -158,7 +199,6 @@ fun ChatList(
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                //.padding(start = 10.dp, end = 10.dp, top = 10.dp)
                 .fillMaxSize()
         ) {
             items(chatSummaries) { chat ->
@@ -179,7 +219,9 @@ fun ChatList(
             item {
                 TextButton(
                     onClick = { navigateToChatsArchived() },
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 5.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
@@ -187,7 +229,9 @@ fun ChatList(
                 ) {
                     Text(
                         "Archived Chats",
-                        modifier = Modifier.padding(5.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(5.dp),
                         fontSize = 16.sp
                     )
                 }

@@ -27,14 +27,13 @@ class ChatDetailsRepositoryImpl @Inject constructor(
     private val chatSummaryDao: ChatSummaryDao
 ) : IChatDetailsRepository {
 
-    private fun mapChatWithMessagesToDomain(chatWithMessages: ChatWithMessages): ChatDetailsModel {
-        return chatWithMessages.toDomain()
-    }
-
     override fun getChatDetails(longAddress: String): Flow<ChatDetailsModel> {
         val address = PhoneNumberParser.phoneNumberParser(longAddress)
         return chatDetailsDao.getChatWithMessages(address)
-            .map(::mapChatWithMessagesToDomain)
+            .map { chatWithMessages ->
+                val domainModel = chatWithMessages.toDomain()
+                domainModel
+            }
     }
 
     override suspend fun isChatAddressSaved(longAddress: String): Boolean =
@@ -52,6 +51,44 @@ class ChatDetailsRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateBlockedChats(
+        blockedChat: Boolean,
+        ids: List<Int>,
+        address: String?
+    ) {
+        withContext(Dispatchers.IO) {
+            if (ids.isEmpty() && address.isNullOrBlank()) {
+                throw IllegalArgumentException("You must provide at least one valid id or address")
+            }
+            if (ids.isNotEmpty() && !address.isNullOrBlank()) {
+                throw IllegalArgumentException("Only one of the parameters must be provided: chatIds or address")
+            }
+
+            val addressesToUpdate = if (ids.isNotEmpty()) {
+                chatSummaryDao.getAddressesByIds(ids)
+            } else {
+                listOf(address!!)
+            }
+
+            chatSummaryDao.updateBlockedChats(blockedChat, ids)
+
+            Log.d("prueba", "Observando a: $addressesToUpdate")
+
+            val exist = chatDetailsDao.getChatIdByAddress(addressesToUpdate[0])
+
+            Log.d("prueba", "Exist?: $exist")
+
+            val updated = chatDetailsDao.updateBlockedChats(blockedChat, addressesToUpdate)
+
+            Log.d("prueba", "Chats Actualizados a $blockedChat: $updated")
+
+            if(updated == 0){
+                throw IllegalStateException("Could not be saved in ChatDetails database")
+            }
+
+        }
+    }
+
     override suspend fun addTextMessage(textMessage: TextMessageModel) {
         withContext(Dispatchers.IO) {
             Log.d("prueba", "Agregando nuevo mensaje: $textMessage")
@@ -66,8 +103,7 @@ class ChatDetailsRepositoryImpl @Inject constructor(
                             timeStamp = textMessage.timeStamp,
                             status = textMessage.status,
                             type = textMessage.type,
-                            updatedAt = textMessage.timeStamp,
-                            archivedChat = obj.archivedChat
+                            isArchived = obj.isArchived
                         )
                     } ?: ChatSummaryEntity(
                         address = textMessage.sender,
@@ -75,15 +111,41 @@ class ChatDetailsRepositoryImpl @Inject constructor(
                         timeStamp = textMessage.timeStamp,
                         status = textMessage.status,
                         type = textMessage.type,
-                        contact = smsContentResolver.getContactName(textMessage.sender) ?: textMessage.sender,
-                        updatedAt = textMessage.timeStamp,
-                        archivedChat = false,
+                        contactName = smsContentResolver.getContactName(textMessage.sender) ?: textMessage.sender,
+                        isArchived = false,
                         accountLogoColor = Converters.fromColor(RandomColor.randomColor())
                     )
 
-                chatSummaryDao.insertChatSummary(chatSummary)
+                val rowId = chatSummaryDao.insertChatSummary(chatSummary)
+
+                if (rowId != -1L) {
+                    Log.d("prueba", "Insercion exitosa: $textMessage")
+                } else {
+                    Log.e("prueba", "Insercion fallo: $textMessage")
+                }
             }
         }
+    }
+
+    override suspend fun updateArchivedChats(
+        archivedChat: Boolean,
+        ids: List<Int>,
+        address: String?
+    ) = withContext(Dispatchers.IO) {
+        if (ids.isEmpty() && address.isNullOrBlank()) {
+            throw IllegalArgumentException("You must provide at least one valid id or address")
+        }
+        if (ids.isNotEmpty() && !address.isNullOrBlank()) {
+            throw IllegalArgumentException("Only one of the parameters must be provided: chatIds or address")
+        }
+
+        val addressesToUpdate = if (ids.isNotEmpty()) {
+            chatSummaryDao.getAddressesByIds(ids)
+        } else {
+            listOf(address!!)
+        }
+
+        chatDetailsDao.updateArchivedChats(archivedChat, addressesToUpdate)
     }
 
     override suspend fun removeMessages(
@@ -98,19 +160,31 @@ class ChatDetailsRepositoryImpl @Inject constructor(
                     content = it.content,
                     timeStamp = it.timeStamp,
                     status = it.status,
-                    type = it.type,
-                    updatedAt = it.timeStamp
+                    type = it.type
                 )
             }
         }
         chatDetailsDao.deleteMessages(messages.map { it.toMessageEntity() })
     }
 
-    override suspend fun deleteChats(chatsToBeDeleted: List<String>) {
+    override suspend fun deleteChats(ids: List<Int>, address: String?) {
         withContext(Dispatchers.IO) {
-            chatSummaryDao.deleteChatSummariesByAddresses(chatsToBeDeleted)
+            if (ids.isEmpty() && address.isNullOrBlank()) {
+                throw IllegalArgumentException("You must provide at least one valid id or address")
+            }
+            if (ids.isNotEmpty() && !address.isNullOrBlank()) {
+                throw IllegalArgumentException("Only one of the parameters must be provided: chatIds or address")
+            }
 
-            val chatIds = chatDetailsDao.getChatIdsByAddresses(chatsToBeDeleted)
+            val addressesToDeleted = if (ids.isNotEmpty()) {
+                chatSummaryDao.getAddressesByIds(ids)
+            } else {
+                listOf(address!!)
+            }
+
+            chatSummaryDao.deleteChatSummariesByAddresses(addressesToDeleted)
+
+            val chatIds = chatDetailsDao.getChatIdsByAddresses(addressesToDeleted)
             chatDetailsDao.deleteMessagesByChatIds(chatIds)
         }
     }

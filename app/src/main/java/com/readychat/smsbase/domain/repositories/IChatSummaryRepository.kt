@@ -8,6 +8,7 @@ interface IChatSummaryRepository {
     fun getChatSummaries(): Flow<List<ChatSummaryModel>>
     fun getArchivedChatSummaries(): Flow<List<ChatSummaryModel>>
     suspend fun updateArchivedChats(archivedChat: Boolean, id: List<Int>)
+    suspend fun updatePinnedChats(pinnedChat: Boolean, id: List<Int>)
     suspend fun loadChatSummariesToRoom()
     suspend fun updateChatSummary(summaryEntity: ChatSummaryEntity)
 }

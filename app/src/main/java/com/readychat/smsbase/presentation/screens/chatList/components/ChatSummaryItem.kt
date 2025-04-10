@@ -13,13 +13,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -41,6 +44,8 @@ fun ChatSummaryItem(
 
     val boxColor =
         if (isSelected) MaterialTheme.colorScheme.outline.copy(alpha = 0.3f) else Color.Transparent
+
+
 
     Box(
         modifier = Modifier
@@ -68,40 +73,68 @@ fun ChatSummaryItem(
             verticalAlignment = Alignment.Top
         ) {
             Icon(
-                imageVector = Icons.Default.AccountCircle,
+                imageVector = if(chatSummaryModel.isBlocked) Icons.Default.Block else Icons.Default.AccountCircle,
                 contentDescription = "AccountRepresentation",
                 modifier = Modifier
                     .size(50.dp),
-                tint = chatSummaryModel.accountLogoColor
+                tint = if(chatSummaryModel.isBlocked) MaterialTheme.colorScheme.outline else chatSummaryModel.accountLogoColor
             )
             Column(
                 modifier = Modifier
                     .padding(start = 5.dp)
-                    .fillMaxWidth(0.9f),
+                    .weight(1f)
+                ,
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                Text(text = chatSummaryModel.contact, fontWeight = Bold)
-                val messageBody =
-                    if (chatSummaryModel.content.length > 80) chatSummaryModel.content.take(80) + " ..." else chatSummaryModel.content
-                Row {
-                    if (chatSummaryModel.type.toInt() == 2) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(text = chatSummaryModel.contactName, fontWeight = Bold)
+                    Text(
+                        text = FormatDate.formatDate(chatSummaryModel.timeStamp),
+                        modifier = Modifier.alpha(0.7f),
+                        style = TextStyle(fontSize = 11.sp, textAlign = TextAlign.End)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (chatSummaryModel.type.toInt() == 2) {
+                            Icon(
+                                imageVector = Icons.Default.DoneAll,
+                                contentDescription = "Sms Sent",
+                                modifier = Modifier
+                                    .size(23.dp)
+                                    .padding(3.dp)
+                            )
+                        }
+                        val messageBody = if (chatSummaryModel.content.length > 80) {
+                            chatSummaryModel.content.take(80) + " ..."
+                        } else {
+                            chatSummaryModel.content
+                        }
+                        Text(text = messageBody, style = TextStyle())
+                    }
+
+                    if (chatSummaryModel.isPinned) {
                         Icon(
-                            imageVector = Icons.Default.DoneAll,
-                            contentDescription = "Sms Sent",
+                            imageVector = Icons.Default.PushPin,
+                            contentDescription = "Pin",
                             modifier = Modifier
                                 .size(23.dp)
                                 .padding(3.dp)
                         )
                     }
-                    Text(text = messageBody, style = TextStyle())
                 }
+
             }
-            Text(
-                text = FormatDate.formatDate(chatSummaryModel.updatedAt),
-                modifier = Modifier.weight(1f),
-                style = TextStyle(fontSize = 11.sp, textAlign = TextAlign.End)
-            )
         }
     }
 }

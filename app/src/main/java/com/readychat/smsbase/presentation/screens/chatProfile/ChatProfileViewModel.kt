@@ -21,7 +21,7 @@ class ChatProfileViewModel @Inject constructor(
     private val _uiState = mutableStateOf<ChatDetailsState>(ChatDetailsState.Loading)
     val uiState: State<ChatDetailsState> get() = _uiState
 
-    fun getChatMessages(){
+    fun getChatDetails(){
         viewModelScope.launch {
             try {
                 val chatAddress = address.value
@@ -36,8 +36,26 @@ class ChatProfileViewModel @Inject constructor(
         }
     }
 
-    fun deleteConversation(){
+    fun deleteChat(chatToBeDeleted: String){
+        viewModelScope.launch {
+            try {
+                chatDetailsRepository.deleteChats(emptyList(), chatToBeDeleted)
+            }catch (e: Exception){
+                Log.e("prueba", "Fallo eliminar el chat: ${e.message}")
+                _uiState.value = ChatDetailsState.Error("Deletion Chat Failed: ${e.message}")
+            }
+        }
+    }
 
+    fun blockChat(chatToBeBlocked: String){
+        viewModelScope.launch {
+            try {
+                chatDetailsRepository.updateBlockedChats(true, emptyList(), chatToBeBlocked)
+            }catch (e: Exception){
+                Log.e("prueba", "Fallo eliminar el chat: ${e.message}")
+                _uiState.value = ChatDetailsState.Error("Deletion Chat Failed: ${e.message}")
+            }
+        }
     }
 
     fun updateAddress(address: String){

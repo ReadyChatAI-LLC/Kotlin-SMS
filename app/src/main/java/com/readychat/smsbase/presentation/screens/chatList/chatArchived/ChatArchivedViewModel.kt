@@ -19,7 +19,7 @@ class ChatArchivedViewModel @Inject constructor(
     private val _uiState = mutableStateOf<SmsUiState>(SmsUiState.Loading)
     val uiState: State<SmsUiState> get() = _uiState
 
-    init {
+    fun loadArchivedChats(){
         viewModelScope.launch {
             Log.d("prueba", "Cargando mensajes de ROOM")
             try {

@@ -1,12 +1,19 @@
 package com.readychat.smsbase.presentation.screens.chatDetails
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
+import android.provider.Telephony
+import android.telephony.SmsManager
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.readychat.smsbase.data.local.MmsSendService
 import com.readychat.smsbase.data.local.SmsSendService
 import com.readychat.smsbase.domain.models.MessageModel
 import com.readychat.smsbase.domain.models.TextMessageModel
@@ -19,7 +26,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatDetailsViewModel @Inject constructor(
-    private val chatDetailsRepository: IChatDetailsRepository
+    private val chatDetailsRepository: IChatDetailsRepository,
 ) : ViewModel() {
 
     private val _address = mutableStateOf("")
@@ -33,6 +40,9 @@ class ChatDetailsViewModel @Inject constructor(
 
     private val _uiState = mutableStateOf<ChatDetailsState>(ChatDetailsState.Loading)
     val uiState: State<ChatDetailsState> get() = _uiState
+
+    private val _selectedImageUri = mutableStateOf<Uri?>(null)
+    val selectedImageUri: State<Uri?> get() = _selectedImageUri
 
     fun getChatMessages(){
         viewModelScope.launch {
@@ -65,16 +75,30 @@ class ChatDetailsViewModel @Inject constructor(
     fun sendMessage(textMessage: TextMessageModel, context: Context) {
         viewModelScope.launch {
             _smsState.value = SmsState.Sending
-            Log.d("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
+            Log.d("prueba", "Estado cambiado: ${_smsState.value}")
 
             try {
                 chatDetailsRepository.addTextMessage(textMessage)
                 sendSms(context, textMessage)
                 _smsState.value = SmsState.Sent
-                Log.d("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
+                Log.d("prueba", "Estado cambiado: ${_smsState.value}")
             } catch (e: Exception) {
                 _smsState.value = SmsState.Error(e.message ?: "Error desconocido")
-                Log.e("ChatDetailsViewModelStatus", "Estado cambiado: ${_smsState.value}")
+                Log.e("prueba", "ChatDetailsViewModel -> Estado cambiado: ${_smsState.value}")
+            }
+        }
+    }
+
+    fun sendMmsMessage(textMessage: TextMessageModel, context: Context) {
+
+        viewModelScope.launch {
+            /*_selectedImageUri.value?.let { uri ->
+                mmsSender.sendMMSViaIntent(textMessage.sender, textMessage.content, uri)
+            }*/
+
+
+            _selectedImageUri.value?.let { uri ->
+                //mmsSender.enviarMMS(textMessage.sender, textMessage.content, uri)
             }
         }
     }
@@ -87,8 +111,11 @@ class ChatDetailsViewModel @Inject constructor(
         _address.value = address
     }
 
+    fun updateSelectedImageUri(imageUri: Uri?){
+        _selectedImageUri.value = imageUri
+    }
 
-    private fun sendSms(context: Context, textMessage: TextMessageModel) {
+    fun sendSms(context: Context, textMessage: TextMessageModel) {
         val intent = Intent(context, SmsSendService::class.java).apply {
             putExtra("phoneNumber", textMessage.sender)
             putExtra("message", textMessage.content)

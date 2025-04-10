@@ -1,6 +1,7 @@
 package com.readychat.smsbase.presentation.screens.chatDetails
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.readychat.smsbase.domain.models.MessageModel
@@ -24,6 +25,8 @@ fun MainChatDetailsScreen(
     val chatDetailsState by viewModel.uiState
     val context = LocalContext.current
 
+    val selectedImageUri by viewModel.selectedImageUri
+
     LaunchedEffect(Unit) {
         viewModel.updateAddress(PhoneNumberParser.getCleanPhoneNumber(address).number)
     }
@@ -41,10 +44,18 @@ fun MainChatDetailsScreen(
             ChatDetailsScreen(
                 messageText = messageText,
                 chatDetails = state.chatDetails,
-                onMessageTextChange = { viewModel.updateMessageText(it) },
+                onSelectImageUri = { viewModel.updateSelectedImageUri(it) },
+                selectedImageUri = selectedImageUri,
+                onMessageChange = { viewModel.updateMessageText(it) },
                 onBack = onBack,
-                onNewMessageSent = {textMessage ->
-                    viewModel.sendMessage(textMessage, context)
+                onSendMessage = { textMessage ->
+                    if (selectedImageUri != null) {
+                        Log.d("prueba", "MMS")
+                        viewModel.sendMmsMessage(textMessage, context)
+                    } else {
+                        Log.d("prueba", "SMS")
+                        viewModel.sendMessage(textMessage, context)
+                    }
                 },
                 removeMessage = {
                     val selectedMessages =
@@ -68,10 +79,13 @@ fun MainChatDetailsScreen(
                 })
         }
 
-        is ChatDetailsState.Error -> ErrorScreen(
-            titleTopBar = address,
-            errorMessage = "MainChatDetailsScreen -> ${state.message}",
-            onRetry = {},
-            onBack = { onBack() })
+        is ChatDetailsState.Error -> {
+            Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            ErrorScreen(
+                titleTopBar = address,
+                errorMessage = "ERROR: MainChatDetailsScreen -> ${state.message}",
+                onRetry = {},
+                onBack = { onBack() })
+        }
     }
 }

@@ -1,5 +1,7 @@
 package com.readychat.smsbase.presentation.screens.chatList.chatArchived.components
 
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,10 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.readychat.smsbase.domain.models.ChatSummaryModel
 import com.readychat.smsbase.presentation.screens.chatList.components.ChatSummaryItem
-import com.readychat.smsbase.presentation.screens.chatList.components.ConfirmDeletionDialog
+import com.readychat.smsbase.presentation.screens.shared.ConfirmOperationDialog
+import com.readychat.smsbase.presentation.screens.shared.ConfirmationModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,18 +46,25 @@ fun ChatArchivedScreen(
     onBack: () -> Unit
 ) {
 
+    val context = LocalContext.current
+
     var selectedChatIds by remember { mutableStateOf(setOf<Int>()) }
     val isSelectionMode = selectedChatIds.isNotEmpty()
     var showDialogToConfirmDeletion by remember { mutableStateOf(false) }
+    var confirmationModel by remember {
+        mutableStateOf<ConfirmationModel?>(
+            null
+        )
+    }
 
     if (showDialogToConfirmDeletion) {
-        ConfirmDeletionDialog(
-            onConfirm = {
-                onDeletionChat(selectedChatIds)
-                showDialogToConfirmDeletion = false
-                selectedChatIds = emptySet()
-            },
-            onDismiss = { showDialogToConfirmDeletion = false })
+        confirmationModel?.let { it ->
+            ConfirmOperationDialog(it)
+        }?: run {
+            Toast.makeText(context, "No action was taken", Toast.LENGTH_SHORT).show()
+            showDialogToConfirmDeletion = false
+            Log.e("prueba", "ChatArchivedScreen. Se inicializo un objeto vacio que no debio inicializarse.")
+        }
     }
 
     BackHandler {
@@ -93,6 +104,16 @@ fun ChatArchivedScreen(
                             )
                         }
                         IconButton(onClick = {
+                            confirmationModel = ConfirmationModel(
+                                title = "Block Chat",
+                                description = "Are you sure you want to block this chat?",
+                                onConfirm = {
+                                    onDeletionChat(selectedChatIds)
+                                    showDialogToConfirmDeletion = false
+                                    selectedChatIds = emptySet()
+                                },
+                                onDismiss = {showDialogToConfirmDeletion = false }
+                            )
                             showDialogToConfirmDeletion = true
                         }) {
                             Icon(

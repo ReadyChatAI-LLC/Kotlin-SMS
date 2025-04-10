@@ -30,9 +30,14 @@ class ChatSummaryRepositoryImpl @Inject constructor(
         return chatSummaryDao.getArchivedChatSummaries().map(::mapChatSummaryEntityToDomain)
     }
 
-    override suspend fun updateArchivedChats(archivedChat: Boolean, id: List<Int>) =
+    override suspend fun updateArchivedChats(archivedChat: Boolean, ids: List<Int>) =
         withContext(Dispatchers.IO) {
-            chatSummaryDao.updateArchivedChats(id, archivedChat)
+            chatSummaryDao.updateArchivedChats(archivedChat, ids)
+        }
+
+    override suspend fun updatePinnedChats(pinnedChat: Boolean, ids: List<Int>) =
+        withContext(Dispatchers.IO) {
+            chatSummaryDao.updatePinnedChats(pinnedChat, ids)
         }
 
     override suspend fun loadChatSummariesToRoom() {
