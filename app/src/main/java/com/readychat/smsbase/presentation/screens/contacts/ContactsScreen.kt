@@ -1,7 +1,6 @@
 package com.readychat.smsbase.presentation.screens.contacts
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,8 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -58,7 +55,7 @@ fun ContactsScreen(
 
     val contacts by viewModel.contacts
     val query by viewModel.query
-    val focusRequester = remember { FocusRequester() }
+    val searchFocusRequester = remember { FocusRequester() }
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -76,7 +73,10 @@ fun ContactsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.getAllContacts()
-        focusRequester.requestFocus()
+
+        kotlinx.coroutines.delay(100)
+        searchFocusRequester.requestFocus()
+        keyboardController?.show()
     }
 
     Scaffold(
@@ -106,7 +106,7 @@ fun ContactsScreen(
                 onValueChange = { viewModel.updateQuery(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(focusRequester),
+                    .focusRequester(searchFocusRequester),
                 placeholder = { Text("Type names or phone numbers") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),

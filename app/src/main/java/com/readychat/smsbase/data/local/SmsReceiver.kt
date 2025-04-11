@@ -53,7 +53,7 @@ class SmsReceiver : BroadcastReceiver() {
                 val timestamp = sms.timestampMillis
 
                 Log.d("prueba", "SMS de $sender: $messageBody")
-                showNotification(context!!, sender, messageBody)
+                showNotification(context, sender, messageBody)
 
                 val values = ContentValues().apply {
                     put(Telephony.Sms.ADDRESS, sender)

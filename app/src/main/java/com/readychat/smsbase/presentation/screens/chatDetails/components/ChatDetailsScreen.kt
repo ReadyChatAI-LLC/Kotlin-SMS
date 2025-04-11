@@ -70,9 +70,11 @@ fun ChatDetailsScreen(
     var showEmojiPicker by remember { mutableStateOf(false) }
 
     BackHandler {
-        if(isSelectionMode){
+        if (showEmojiPicker) {
+            showEmojiPicker = false
+        } else if (isSelectionMode) {
             selectedMessageIds = emptySet()
-        }else{
+        } else {
             onBack()
         }
     }
@@ -131,7 +133,7 @@ fun ChatDetailsScreen(
                 chatDetails.chatList,
                 selectedList = selectedMessageIds,
                 isSelectionMode = isSelectionMode,
-                onScroll = {showEmojiPicker = false},
+                onScroll = { showEmojiPicker = false },
                 onMessageSelected = {
                     selectedMessageIds = if (selectedMessageIds.contains(it)) {
                         selectedMessageIds - it
@@ -141,13 +143,13 @@ fun ChatDetailsScreen(
                 }
             )
 
-            if(chatDetails.isBlocked){
+            if (chatDetails.isBlocked) {
                 BlockedMessageInput()
-            }else{
+            } else {
                 MessageInput(
                     messageText = messageText,
                     showEmojiPicker = showEmojiPicker,
-                    updateShowEmojiPicker = {showEmojiPicker = it},
+                    updateShowEmojiPicker = { showEmojiPicker = it },
                     onMessageChange = { onMessageChange(it) },
                     onSendMessage = {
                         if (messageText.isNotBlank() || selectedImageUri != null) {
@@ -189,7 +191,10 @@ fun MessagesList(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val nestedScrollConnection = object : NestedScrollConnection {
-        override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: NestedScrollSource): androidx.compose.ui.geometry.Offset {
+        override fun onPreScroll(
+            available: androidx.compose.ui.geometry.Offset,
+            source: NestedScrollSource
+        ): androidx.compose.ui.geometry.Offset {
             keyboardController?.hide()
             onScroll()
             return androidx.compose.ui.geometry.Offset.Zero

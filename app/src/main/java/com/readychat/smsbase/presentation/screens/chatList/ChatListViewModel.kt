@@ -42,13 +42,6 @@ class ChatListViewModel @Inject constructor(
                 loadChats()
             }
         }
-
-        SmsReceiver.smsListener = { textMessage ->
-            Log.i("prueba", "Mensaje recibido!!!: $textMessage")
-            viewModelScope.launch {
-                chatDetailsRepository.addTextMessage(textMessage)
-            }
-        }
     }
 
     fun loadChats() {
